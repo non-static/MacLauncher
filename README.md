@@ -40,7 +40,7 @@ Build a local macOS installer package:
 scripts/build-installer.sh
 ```
 
-The script builds a release binary, wraps it in `MacLauncher.app`, ad-hoc signs the app, and writes an installer package to `.build/installer/MacLauncher-0.1.0.pkg`.
+The script builds a release binary, wraps it in `MacLauncher.app`, ad-hoc signs the app, and writes an installer package to `.build/installer/MacLauncher-0.0.1.pkg`.
 The packaged app includes the app icon from `Sources/MacLauncher/Resources/AppIcon.icns`.
 
 Optional environment variables:
@@ -56,7 +56,7 @@ Optional environment variables:
 Install the generated package with Finder or:
 
 ```sh
-sudo installer -pkg .build/installer/MacLauncher-0.1.0.pkg -target /
+sudo installer -pkg .build/installer/MacLauncher-0.0.1.pkg -target /
 ```
 
 ## Current scope
@@ -74,6 +74,7 @@ Completed vertical slice:
 - modern app logo and packaged `.icns` app icon
 - runtime app icon when launched through `swift run`
 - background transparency setting, defaulting to 30%
+- bottom-right version label with a GitHub repository link
 
 ## Settings
 

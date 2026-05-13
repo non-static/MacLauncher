@@ -260,6 +260,7 @@ This is the first true vertical slice. Keep it brutally small.
 - Main window background opacity updates from the transparency setting.
 - Main UI includes Settings and Refresh controls.
 - Main UI hints that `Command-,` opens Settings.
+- Main UI shows the app version and a GitHub repository link in a corner.
 - App icon is present in both `swift run` and packaged app flows.
 - `scripts/build-installer.sh` builds a local `.pkg` installer.
 - README explains build, run, test, package, settings, and icon regeneration.
@@ -513,6 +514,7 @@ A realistic app you can distribute or use daily.
 
 ### Already covered in Phase 1
 - Local `.pkg` installer package.
+- Manual GitHub release package for version `0.0.1`.
 - App icon and logo assets.
 - Runtime app icon for `swift run`.
 - Escape-to-quit behavior.

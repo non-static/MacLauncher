@@ -357,8 +357,26 @@ Reason:
 - Updated local `/Applications/MacLauncher.app` from `.build/installer/MacLauncher.app`.
 - Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
 - Ran installed app executable smoke from `/Applications/MacLauncher.app/Contents/MacOS/MacLauncher`: app process stayed alive for 5 seconds, then stopped cleanly.
+- Created release branch `codex/release-0.0.1`.
+- Added a bottom-right UI link showing `v0.0.1 GitHub`.
+- Version display reads `CFBundleShortVersionString` in packaged builds and falls back to `0.0.1` for `swift run`.
+- Changed the default installer package version to `0.0.1`.
+- Updated README package paths to `MacLauncher-0.0.1.pkg`.
+- Updated `PLAN.md` with the version/GitHub UI and manual `0.0.1` release slice.
+- Ran `git diff --check`: exits 0.
+- Ran `swift build`: exits 0.
+- Ran `swift test`: exits 0.
+- Ran `VERSION=0.0.1 scripts/build-installer.sh`: exits 0.
+- Built release package `.build/installer/MacLauncher-0.0.1.pkg`.
+- Release package SHA-256: `39bf1659f3b300a863ee26ce13472821ec1ddeb126fbe134b73f2aabb6a5ab96`.
+- Verified packaged app version is `0.0.1`.
+- Verified packaged app signature with `codesign --verify --deep --strict --verbose=2`.
+- Verified package payload includes `/Applications/MacLauncher.app`.
+- Ran packaged app executable smoke for 5 seconds: exits 0 after test kill.
+- Wrote checksum asset `.build/installer/MacLauncher-0.0.1.pkg.sha256`.
+- Manual GitHub release URL: `https://github.com/non-static/MacLauncher/releases/tag/v0.0.1`.
 
 ## Next steps
 
-1. Launch-exit fallback PR is ready from `codex/launch-exit-fallback`.
-2. After merge, return local checkout to `main` and pull latest.
+1. Push `codex/release-0.0.1` and tag `v0.0.1`.
+2. Confirm GitHub release assets are attached.
