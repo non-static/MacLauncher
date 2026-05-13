@@ -306,7 +306,7 @@ Start with an in-memory search filter. Do not build a complex search index yet.
 - Escape clears a non-empty search and restores the full app grid instead of exiting the app.
 - Empty search results show a dedicated no-match state.
 - Unit tests cover filtering, clearing search, selection movement, selection reconciliation, and launching the highlighted app.
-- Phase 2 build has been installed locally to `/Applications/MacLauncher.app` for manual use.
+- Phase 2 Escape-clear build has been installed locally to `/Applications/MacLauncher.app` for manual use.
 
 ---
 

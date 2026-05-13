@@ -225,8 +225,13 @@ Reason:
 - Ran `scripts/build-installer.sh`: exits 0.
 - Latest package SHA-256 after Escape search clear: `005af29e32b39142faa3b561693b850c20697dd1a8c6691def2de33e58004b71`.
 - Ran `swift run MacLauncher` smoke: app process stayed alive for 5 seconds, then stopped cleanly.
+- Rebuilt the Escape-clear package before local install: exits 0.
+- Latest package SHA-256 before local install: `5104b2c6d39a74fae9ce2e4d5ec8257049b0d8a70877aac50b84b1b1aaecb40a`.
+- Updated local `/Applications/MacLauncher.app` from `.build/installer/MacLauncher.app`.
+- Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
+- Ran installed app executable smoke from `/Applications/MacLauncher.app/Contents/MacOS/MacLauncher`: exits 0 after launch window cycle.
 
 ## Next steps
 
-1. Verify the Escape-clear-search branch.
-2. Commit and open a PR if requested.
+1. Open the Escape-clear-search PR from `codex/phase2-esc-clears-search`.
+2. After merge, return local checkout to `main` and pull latest.
