@@ -30,6 +30,32 @@ The terminal command keeps running while the app is open. Quit the app or close 
 swift test
 ```
 
+## Package
+
+Build a local macOS installer package:
+
+```sh
+scripts/build-installer.sh
+```
+
+The script builds a release binary, wraps it in `MacLauncher.app`, ad-hoc signs the app, and writes an installer package to `.build/installer/MacLauncher-0.1.0.pkg`.
+
+Optional environment variables:
+
+- `VERSION=0.2.0`
+- `BUILD_CONFIG=debug`
+- `BUNDLE_ID=com.example.MacLauncher`
+- `CODE_SIGN_IDENTITY="Developer ID Application: Example"`
+- `CODE_SIGN_IDENTITY=skip`
+- `PKG_SIGN_IDENTITY="Developer ID Installer: Example"`
+- `PKG_OUTPUT=/tmp/MacLauncher.pkg`
+
+Install the generated package with Finder or:
+
+```sh
+sudo installer -pkg .build/installer/MacLauncher-0.1.0.pkg -target /
+```
+
 ## Current scope
 
 Completed vertical slice:
@@ -41,6 +67,7 @@ Completed vertical slice:
 - manually refresh the app catalog
 - load app icons through a replaceable icon loader
 - activate and foreground the app window when launched from `swift run`
+- build a local `.pkg` installer that installs `MacLauncher.app` into `/Applications`
 
 Not yet implemented:
 
@@ -50,3 +77,4 @@ Not yet implemented:
 - groups
 - full-screen overlay
 - global hotkey
+- notarized release package
