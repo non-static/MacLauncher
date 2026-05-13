@@ -343,6 +343,7 @@ Use file versioning in the JSON so future migrations are possible.
 - Hiding apps persists and removes them from the grid.
 - Reset Layout restores scanned order and clears hidden apps.
 - Unit tests cover persisted order, hidden apps, custom order saving, reset, load failure fallback, and unsupported layout versions.
+- Phase 3 build has been installed locally to `/Applications/MacLauncher.app` for manual use.
 
 ---
 

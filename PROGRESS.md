@@ -274,8 +274,13 @@ Reason:
 - Re-ran `scripts/build-installer.sh` after keyboard navigation fix: exits 0.
 - Latest package SHA-256 after keyboard navigation fix: `15aa4cea50689a53c7b09f4b9a9836ae99ec9888010c0423acdaa01270bc9a72`.
 - Re-ran `swift run MacLauncher` smoke after keyboard navigation fix: app process stayed alive for 5 seconds, then stopped cleanly.
+- Rebuilt the Phase 3 package before local install: exits 0.
+- Latest package SHA-256 before local install: `64ea430a70ce7df105c6b739e41246d3cec1a14b8606c6c388d478d963973971`.
+- Updated local `/Applications/MacLauncher.app` from `.build/installer/MacLauncher.app`.
+- Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
+- Ran installed app executable smoke from `/Applications/MacLauncher.app/Contents/MacOS/MacLauncher`: app process stayed alive for 5 seconds, then stopped cleanly.
 
 ## Next steps
 
-1. Open a Phase 3 PR if requested.
-2. After merge, start Phase 4 drag-and-drop reordering.
+1. Phase 3 PR is ready from `codex/phase3-layout-persistence`.
+2. After merge, return local checkout to `main` and pull latest.
