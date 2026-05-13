@@ -373,6 +373,8 @@ Keep drag/drop logic in the grid feature layer, not in the domain model.
 - Invalid drops, including dropping a tile on itself or using unknown app IDs, are ignored without saving.
 - Drag targets show an insertion marker before or after the target tile instead of outlining the tile.
 - Drag-over uses a move drop proposal, so the UI does not show the `+` copy/group badge.
+- Drag/drop supports index-based insertion before the first tile and after the last tile.
+- Drag hover scrolls the target tile into view so users can continue moving toward offscreen positions.
 - Unit tests cover persisted drag/drop order, reload survival, and invalid-drop safety.
 
 ---

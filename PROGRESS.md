@@ -319,6 +319,19 @@ Reason:
 - Re-ran `scripts/build-installer.sh` after insertion-marker fix: exits 0.
 - Latest package SHA-256 after insertion-marker fix: `9888c847768ba3e1ec9e6d86ae74f2ba6b5e12ce3457fcb099011a869fb1110a`.
 - Re-ran `swift run MacLauncher` smoke after insertion-marker fix: app process stayed alive for 5 seconds, then stopped cleanly.
+- Reworked drag/drop to use insertion indexes instead of only target app IDs.
+- Drops can now target index `0`, so an app can move to the very first position.
+- Drops can now target `apps.count`, so an app can move after the last visible tile.
+- Drop pointer position chooses before/after the hovered tile.
+- Drag hover scrolls the hovered target tile into view, allowing continued drag toward offscreen positions.
+- Added tests for moving to the first index, moving after the last index, and rejecting out-of-range indexes.
+- Updated `PLAN.md` with the first/last/offscreen drag behavior.
+- Re-ran `git diff --check` after first/offscreen drag fix: exits 0.
+- Re-ran `swift build` after first/offscreen drag fix: exits 0.
+- Re-ran `swift test` after first/offscreen drag fix: exits 0.
+- Re-ran `scripts/build-installer.sh` after first/offscreen drag fix: exits 0.
+- Latest package SHA-256 after first/offscreen drag fix: `ec625c25587b5303d8f407536bf45a9505979739ca47b6e79434ea1c5aa0cbf0`.
+- Re-ran `swift run MacLauncher` smoke after first/offscreen drag fix: app process stayed alive for 5 seconds, then stopped cleanly.
 
 ## Next steps
 

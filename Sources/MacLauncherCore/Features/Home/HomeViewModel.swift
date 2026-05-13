@@ -127,9 +127,27 @@ public final class HomeViewModel: ObservableObject {
             return false
         }
 
+        let insertionIndex = currentIndex < targetIndex ? targetIndex + 1 : targetIndex
+        return reorderAppInLayout(draggedAppID: draggedAppID, targetIndex: insertionIndex)
+    }
+
+    @discardableResult
+    public func reorderAppInLayout(
+        draggedAppID: AppItem.ID,
+        targetIndex: Int
+    ) -> Bool {
+        guard let currentIndex = visibleApps.firstIndex(where: { $0.id == draggedAppID }),
+              targetIndex >= 0,
+              targetIndex <= visibleApps.count,
+              targetIndex != currentIndex,
+              targetIndex != currentIndex + 1
+        else {
+            return false
+        }
+
         var reorderedApps = visibleApps
         let movedApp = reorderedApps.remove(at: currentIndex)
-        let insertionIndex = min(targetIndex, reorderedApps.count)
+        let insertionIndex = targetIndex > currentIndex ? targetIndex - 1 : targetIndex
         reorderedApps.insert(movedApp, at: insertionIndex)
         let hiddenOrderedIDs = layout.orderedAppIDs.filter { layout.hiddenAppIDs.contains($0) }
 
