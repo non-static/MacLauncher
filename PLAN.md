@@ -294,6 +294,17 @@ The launcher becomes truly usable.
 ### Design note
 Start with an in-memory search filter. Do not build a complex search index yet.
 
+### Implemented in this Phase 2 pass
+- Search field added to the launcher header.
+- Search filters the in-memory app list by app-name substring, case-insensitive and diacritic-insensitive.
+- Search is focused when the launcher window appears.
+- The first visible app is highlighted automatically.
+- Arrow keys move the highlighted app within the visible grid.
+- Enter launches the highlighted app.
+- Empty search results show a dedicated no-match state.
+- Unit tests cover filtering, clearing search, selection movement, selection reconciliation, and launching the highlighted app.
+- Phase 2 build has been installed locally to `/Applications/MacLauncher.app` for manual use.
+
 ---
 
 ## Phase 3 — Layout persistence
