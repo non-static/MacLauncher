@@ -7,6 +7,8 @@ struct MacLauncherApp: App {
 
     private let container: AppContainer
 
+    @AppStorage("backgroundTransparencyPercent") private var backgroundTransparencyPercent = 30.0
+
     @StateObject private var viewModel: HomeViewModel
 
     init() {
@@ -22,11 +24,20 @@ struct MacLauncherApp: App {
 
     var body: some Scene {
         WindowGroup("MacLauncher") {
-            HomeView(
+            LauncherRootView(
                 viewModel: viewModel,
-                iconLoader: container.iconLoader
+                iconLoader: container.iconLoader,
+                backgroundTransparencyPercent: backgroundTransparencyPercent
             )
             .frame(minWidth: 720, minHeight: 520)
+            .background(WindowTransparencyConfigurator())
+        }
+        Settings {
+            SettingsView(
+                backgroundTransparencyPercent: $backgroundTransparencyPercent
+            )
+            .frame(width: 420)
+            .background(SettingsWindowConfigurator())
         }
         .commands {
             CommandGroup(after: .appInfo) {
@@ -36,5 +47,24 @@ struct MacLauncherApp: App {
                 .keyboardShortcut("r", modifiers: [.command])
             }
         }
+    }
+}
+
+private struct LauncherRootView: View {
+    @Environment(\.openSettings) private var openSettings
+
+    let viewModel: HomeViewModel
+    let iconLoader: any AppIconLoading
+    let backgroundTransparencyPercent: Double
+
+    var body: some View {
+        HomeView(
+            viewModel: viewModel,
+            iconLoader: iconLoader,
+            backgroundTransparencyPercent: backgroundTransparencyPercent,
+            onOpenSettings: {
+                openSettings()
+            }
+        )
     }
 }

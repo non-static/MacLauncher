@@ -59,8 +59,23 @@ final class LauncherAppDelegate: NSObject, NSApplicationDelegate {
                 return event
             }
 
+            if Self.closeVisibleSettingsWindow() {
+                return nil
+            }
+
             NSApp.terminate(nil)
             return nil
         }
+    }
+
+    private static func closeVisibleSettingsWindow() -> Bool {
+        guard let settingsWindow = NSApp.windows.first(where: {
+            $0.identifier == LauncherWindowIdentifiers.settings && $0.isVisible
+        }) else {
+            return false
+        }
+
+        settingsWindow.close()
+        return true
     }
 }

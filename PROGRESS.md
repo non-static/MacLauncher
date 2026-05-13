@@ -6,7 +6,7 @@ Source plan: `PLAN.md`
 
 Branch:
 
-- `codex/esc-quit`
+- `codex/background-transparency`
 
 Scope chosen for this pass:
 
@@ -15,6 +15,7 @@ Scope chosen for this pass:
 - Packaging slice from Phase 10: local installer package
 - Icon slice from Phase 10: modern app logo and `.icns`
 - Keyboard behavior slice: Escape quits the app
+- Settings slice from Phase 9: configurable background transparency
 
 Reason:
 
@@ -23,6 +24,7 @@ Reason:
 - User requested installer package before continuing product features.
 - User requested a modern app logo with no strict visual constraints.
 - User requested Escape key exit the app instead of just closing a window.
+- User requested configurable `x%` background transparency with default `30`.
 
 ## Completed
 
@@ -65,6 +67,19 @@ Reason:
 - Escape now calls `NSApp.terminate(nil)` and consumes the key event.
 - Added cleanup for the Escape key monitor during app termination.
 - Updated `PLAN.md` with the current keyboard behavior slice.
+- Added `@AppStorage("backgroundTransparencyPercent")` with default `30.0`.
+- Added `SettingsView` with a `0...100%` slider and current percent display.
+- Added transparent window configuration for the launcher window.
+- Applied the setting to the launcher background opacity.
+- Updated `PLAN.md` with the current settings slice.
+- Updated README with the new Settings entry.
+- Added a Settings button beside Refresh in the launcher header.
+- Added a bottom hint: `Command-, opens Settings`.
+- Added `LauncherRootView` to call SwiftUI `openSettings`.
+- Updated `PLAN.md` with the Settings button and hint requirements.
+- Added a Settings window identifier through `SettingsWindowConfigurator`.
+- Updated Escape handling so an open Settings window closes first; next Escape quits the app.
+- Updated `PLAN.md` with the Settings-first Escape behavior.
 
 ## Verification
 
@@ -121,6 +136,30 @@ Reason:
 - Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
 - Launched installed app from `/Applications/MacLauncher.app`; process started.
 - Automated Escape key verification was blocked by macOS Accessibility: `osascript is not allowed to send keystrokes`.
+- Re-ran `swift build`: exits 0.
+- Re-ran `swift test`: exits 0.
+- Re-ran `swift run MacLauncher` smoke for 3 seconds: exits 0 after test kill.
+- Re-ran `scripts/build-installer.sh`: exits 0.
+- Latest package SHA-256 after background transparency setting: `2e01d9566e681a04942b9d623faa4ae266048ba52a10040349751657df65e00a`.
+- Updated local `/Applications/MacLauncher.app` from the rebuilt app bundle.
+- Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
+- Launched installed app from `/Applications/MacLauncher.app`; process started.
+- Re-ran `swift build` after adding Settings button and footer hint: exits 0.
+- Re-ran `swift test` after adding Settings button and footer hint: exits 0.
+- Re-ran `scripts/build-installer.sh`: exits 0.
+- Latest package SHA-256 after Settings button and footer hint: `c05bee86b01e153d6e2f365369041ecba3a9f9eca8747d5cb51c44c4716d9a54`.
+- Updated local `/Applications/MacLauncher.app` from the rebuilt app bundle.
+- Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
+- Launched installed app from `/Applications/MacLauncher.app`; process started.
+- Re-ran `swift run MacLauncher` smoke for 3 seconds: exits 0 after test kill.
+- Re-ran `swift build` after Settings-first Escape behavior: exits 0.
+- Re-ran `swift test` after Settings-first Escape behavior: exits 0.
+- Re-ran `scripts/build-installer.sh`: exits 0.
+- Latest package SHA-256 after Settings-first Escape behavior: `003c0460059d840c6e58be93c3b89c4475cd26e70897dc9ec07fece92551e987`.
+- Updated local `/Applications/MacLauncher.app` from the rebuilt app bundle.
+- Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
+- Launched installed app from `/Applications/MacLauncher.app`; process started.
+- Re-ran `swift run MacLauncher` smoke for 3 seconds: exits 0 after test kill.
 
 ## Next steps
 
