@@ -1,3 +1,4 @@
+import AppKit
 import MacLauncherCore
 import SwiftUI
 
@@ -17,7 +18,10 @@ struct MacLauncherApp: App {
         _viewModel = StateObject(
             wrappedValue: HomeViewModel(
                 catalogService: container.catalogService,
-                launchService: container.launchService
+                launchService: container.launchService,
+                onSuccessfulLaunch: {
+                    NSApp.terminate(nil)
+                }
             )
         )
     }
