@@ -4,12 +4,30 @@ import Foundation
 @MainActor
 public final class HomeViewModel: ObservableObject {
     @Published public private(set) var apps: [AppItem] = []
+    @Published public private(set) var selectedAppID: AppItem.ID?
     @Published public private(set) var isLoading = false
+    @Published public var searchQuery = "" {
+        didSet {
+            applySearch()
+        }
+    }
     @Published public var errorMessage: String?
 
     private let catalogService: any AppCatalogService
     private let launchService: any AppLaunchService
     private let onSuccessfulLaunch: @MainActor () -> Void
+    private var allApps: [AppItem] = []
+
+    public var totalAppCount: Int {
+        allApps.count
+    }
+
+    public var selectedApp: AppItem? {
+        guard let selectedAppID else {
+            return nil
+        }
+        return apps.first { $0.id == selectedAppID }
+    }
 
     public init(
         catalogService: any AppCatalogService,
@@ -26,11 +44,34 @@ public final class HomeViewModel: ObservableObject {
         defer { isLoading = false }
 
         do {
-            apps = try catalogService.installedApps()
+            allApps = try catalogService.installedApps()
+            applySearch()
             errorMessage = nil
         } catch {
             errorMessage = "Could not refresh apps: \(error.localizedDescription)"
         }
+    }
+
+    public func moveSelection(by offset: Int) {
+        guard apps.isEmpty == false else {
+            selectedAppID = nil
+            return
+        }
+
+        let currentIndex = selectedAppID
+            .flatMap { selectedAppID in
+                apps.firstIndex { $0.id == selectedAppID }
+            } ?? 0
+        let nextIndex = min(max(currentIndex + offset, 0), apps.count - 1)
+        selectedAppID = apps[nextIndex].id
+    }
+
+    @discardableResult
+    public func launchSelected() -> Task<Void, Never>? {
+        guard let selectedApp else {
+            return nil
+        }
+        return launch(selectedApp)
     }
 
     @discardableResult
@@ -44,5 +85,33 @@ public final class HomeViewModel: ObservableObject {
                 errorMessage = "Could not launch \(app.name): \(error.localizedDescription)"
             }
         }
+    }
+
+    private func applySearch() {
+        let trimmedQuery = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmedQuery.isEmpty {
+            apps = allApps
+        } else {
+            apps = allApps.filter { app in
+                app.name.range(
+                    of: trimmedQuery,
+                    options: [.caseInsensitive, .diacriticInsensitive]
+                ) != nil
+            }
+        }
+        reconcileSelection()
+    }
+
+    private func reconcileSelection() {
+        guard apps.isEmpty == false else {
+            selectedAppID = nil
+            return
+        }
+
+        if let selectedAppID, apps.contains(where: { $0.id == selectedAppID }) {
+            return
+        }
+
+        selectedAppID = apps[0].id
     }
 }

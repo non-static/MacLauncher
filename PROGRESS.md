@@ -6,29 +6,16 @@ Source plan: `PLAN.md`
 
 Branch:
 
-- `codex/phase1-plan-update`
+- `codex/phase2-search`
 
 Scope chosen for this pass:
 
-- Phase 0: project bootstrap
-- Phase 1: smallest working launcher
-- Packaging slice from Phase 10: local installer package
-- Icon slice from Phase 10: modern app logo and `.icns`
-- Keyboard behavior slice: Escape quits the app
-- Settings slice from Phase 9: configurable background transparency
-- Launch behavior slice: quit after launching a selected app
-- Documentation cleanup: fold shipped features into Phase 1
+- Phase 2: searchable launcher
 
 Reason:
 
-- Repo started with only `PLAN.md` and `LICENSE`.
-- Plan says to build one working vertical slice at a time.
-- User requested installer package before continuing product features.
-- User requested a modern app logo with no strict visual constraints.
-- User requested Escape key exit the app instead of just closing a window.
-- User requested configurable `x%` background transparency with default `30`.
-- User requested MacLauncher exit after launching an app from the list.
-- User requested all newly added features be listed as part of Phase 1.
+- User requested executing Phase 2 from `PLAN.md`.
+- Phase 2 is the next planned vertical slice after the merged Phase 1 work.
 
 ## Completed
 
@@ -97,6 +84,29 @@ Reason:
   - app icon and runtime icon support
   - local installer package
 - Removed duplicated current-slice details from Phase 9 and Phase 10, leaving notes that those pieces are already covered in Phase 1.
+- Added Phase 2 search state to `HomeViewModel`:
+  - full in-memory app list
+  - filtered visible app list
+  - search query
+  - selected app ID
+  - selected app lookup
+  - selection movement
+  - highlighted-app launch
+- Added a search field to the launcher header.
+- Search is focused when the launcher window appears.
+- Search filters app names immediately using case-insensitive and diacritic-insensitive substring matching.
+- Clearing search restores the full app list.
+- The first visible app is selected automatically.
+- Search changes reconcile selection to a visible app.
+- Added selected-tile highlighting in the grid.
+- Added keyboard handling for:
+  - Left/Right app selection movement
+  - Up/Down app selection movement by estimated grid row
+  - Enter launching the selected app
+- Added a no-match empty state for searches with no results.
+- Added Phase 2 unit tests for search filtering, clearing, selection movement, selection reconciliation, and launching the highlighted app.
+- Updated `PLAN.md` with the implemented Phase 2 details.
+- Updated this `PROGRESS.md` for Phase 2 continuation.
 
 ## Verification
 
@@ -188,11 +198,15 @@ Reason:
 - Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
 - Launched installed app from `/Applications/MacLauncher.app`; process started.
 - Re-ran `swift run MacLauncher` smoke for 3 seconds: exits 0 after test kill.
+- Re-ran `swift test` during Phase 2 implementation: exits 0.
+- Re-ran `git diff --check` after Phase 2 implementation: exits 0.
+- Re-ran `swift build` after Phase 2 implementation: exits 0.
+- Re-ran `swift test` after Phase 2 implementation: exits 0.
+- Re-ran `scripts/build-installer.sh` after Phase 2 implementation: exits 0.
+- Latest package SHA-256 after Phase 2 search: `452f5382946635891bae6e8505a5b8bcf7b91d124bac854935fb210ea1b8b0c7`.
+- Re-ran `swift run MacLauncher` smoke after Phase 2 implementation: app process stayed alive for 5 seconds, then stopped cleanly.
 
 ## Next steps
 
-1. Start Phase 2 in a later pass:
-   - add search field
-   - filter app grid by substring
-   - focus search on window open
-   - Enter launches highlighted app
+1. Open the Phase 2 PR from `codex/phase2-search`.
+2. After Phase 2 merges, start Phase 3 layout persistence.

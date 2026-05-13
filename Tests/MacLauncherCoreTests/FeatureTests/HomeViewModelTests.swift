@@ -6,13 +6,7 @@ import Testing
 struct HomeViewModelTests {
     @Test
     func refreshLoadsApps() {
-        let app = AppItem(
-            id: "com.example.app",
-            name: "Example",
-            bundleIdentifier: "com.example.app",
-            appURL: URL(fileURLWithPath: "/Applications/Example.app"),
-            iconCacheKey: "com.example.app"
-        )
+        let app = makeApp()
         let viewModel = HomeViewModel(
             catalogService: StubCatalogService(apps: [app]),
             launchService: StubLaunchService()
@@ -21,6 +15,8 @@ struct HomeViewModelTests {
         viewModel.refresh()
 
         #expect(viewModel.apps == [app])
+        #expect(viewModel.totalAppCount == 1)
+        #expect(viewModel.selectedAppID == app.id)
         #expect(viewModel.errorMessage == nil)
     }
 
@@ -35,6 +31,73 @@ struct HomeViewModelTests {
 
         #expect(viewModel.apps.isEmpty)
         #expect(viewModel.errorMessage != nil)
+    }
+
+    @Test
+    func searchFiltersAppsByNameAndClearRestoresAllApps() {
+        let apps = [
+            makeApp(id: "com.example.safari", name: "Safari"),
+            makeApp(id: "com.example.terminal", name: "Terminal"),
+            makeApp(id: "com.example.preview", name: "Preview")
+        ]
+        let viewModel = HomeViewModel(
+            catalogService: StubCatalogService(apps: apps),
+            launchService: StubLaunchService()
+        )
+
+        viewModel.refresh()
+        viewModel.searchQuery = "TER"
+
+        #expect(viewModel.apps == [apps[1]])
+        #expect(viewModel.selectedAppID == apps[1].id)
+
+        viewModel.searchQuery = ""
+
+        #expect(viewModel.apps == apps)
+        #expect(viewModel.totalAppCount == 3)
+    }
+
+    @Test
+    func selectionMovesWithinVisibleApps() {
+        let apps = [
+            makeApp(id: "com.example.one", name: "One"),
+            makeApp(id: "com.example.two", name: "Two"),
+            makeApp(id: "com.example.three", name: "Three")
+        ]
+        let viewModel = HomeViewModel(
+            catalogService: StubCatalogService(apps: apps),
+            launchService: StubLaunchService()
+        )
+
+        viewModel.refresh()
+        viewModel.moveSelection(by: 1)
+        #expect(viewModel.selectedAppID == apps[1].id)
+
+        viewModel.moveSelection(by: 10)
+        #expect(viewModel.selectedAppID == apps[2].id)
+
+        viewModel.moveSelection(by: -10)
+        #expect(viewModel.selectedAppID == apps[0].id)
+    }
+
+    @Test
+    func searchReconcilesSelectionToVisibleApps() {
+        let apps = [
+            makeApp(id: "com.example.calendar", name: "Calendar"),
+            makeApp(id: "com.example.safari", name: "Safari"),
+            makeApp(id: "com.example.terminal", name: "Terminal")
+        ]
+        let viewModel = HomeViewModel(
+            catalogService: StubCatalogService(apps: apps),
+            launchService: StubLaunchService()
+        )
+
+        viewModel.refresh()
+        viewModel.moveSelection(by: 2)
+        viewModel.searchQuery = "saf"
+
+        #expect(viewModel.apps == [apps[1]])
+        #expect(viewModel.selectedAppID == apps[1].id)
     }
 
     @Test
@@ -73,13 +136,42 @@ struct HomeViewModelTests {
         #expect(viewModel.errorMessage != nil)
     }
 
-    private func makeApp() -> AppItem {
+    @Test
+    func launchSelectedLaunchesHighlightedApp() async {
+        let apps = [
+            makeApp(id: "com.example.one", name: "One"),
+            makeApp(id: "com.example.two", name: "Two")
+        ]
+        var didRunSuccessHandler = false
+        let viewModel = HomeViewModel(
+            catalogService: StubCatalogService(apps: apps),
+            launchService: StubLaunchService(),
+            onSuccessfulLaunch: {
+                didRunSuccessHandler = true
+            }
+        )
+
+        viewModel.refresh()
+        viewModel.moveSelection(by: 1)
+        if let task = viewModel.launchSelected() {
+            await task.value
+        }
+
+        #expect(viewModel.selectedAppID == apps[1].id)
+        #expect(didRunSuccessHandler)
+        #expect(viewModel.errorMessage == nil)
+    }
+
+    private func makeApp(
+        id: String = "com.example.app",
+        name: String = "Example"
+    ) -> AppItem {
         AppItem(
-            id: "com.example.app",
-            name: "Example",
-            bundleIdentifier: "com.example.app",
-            appURL: URL(fileURLWithPath: "/Applications/Example.app"),
-            iconCacheKey: "com.example.app"
+            id: id,
+            name: name,
+            bundleIdentifier: id,
+            appURL: URL(fileURLWithPath: "/Applications/\(name).app"),
+            iconCacheKey: id
         )
     }
 }
