@@ -424,6 +424,7 @@ The app is usable by real users, not just developers.
 A realistic app you can distribute or use daily.
 
 ### Tasks
+- Local installer package
 - App icon
 - Versioning
 - archive/release config
@@ -432,6 +433,23 @@ A realistic app you can distribute or use daily.
 - crash-safe persistence
 - better logging
 - migration tests for layout versions
+
+### Current packaging slice
+Build a local installer before full release readiness:
+
+1. Build a release SwiftPM product.
+2. Wrap the executable in a minimal `MacLauncher.app` bundle.
+3. Add a valid `Info.plist`.
+4. Ad-hoc sign by default, with optional Developer ID app signing.
+5. Build a `.pkg` installer that places `MacLauncher.app` in `/Applications`.
+6. Allow optional Developer ID installer signing for later notarization.
+
+### Acceptance criteria
+- `scripts/build-installer.sh` builds `.build/installer/MacLauncher-<version>.pkg`.
+- Generated app bundle has a valid `Info.plist`.
+- Generated package lists `/Applications/MacLauncher.app` in its payload.
+- Script works without Xcode project files.
+- README explains package build and install commands.
 
 ---
 
