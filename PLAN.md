@@ -378,6 +378,7 @@ Keep drag/drop logic in the grid feature layer, not in the domain model.
 - Top and bottom drag zones scroll by grid rows so users can reach currently invisible positions during a drag.
 - Drop slots extend into gaps around tiles so before-first and after-last positions are easier to target.
 - Unit tests cover persisted drag/drop order, reload survival, and invalid-drop safety.
+- Phase 4 build has been installed locally to `/Applications/MacLauncher.app` for manual use.
 
 ---
 

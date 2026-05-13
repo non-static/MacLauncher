@@ -341,8 +341,13 @@ Reason:
 - Re-ran `scripts/build-installer.sh` after explicit drop-slot fix: exits 0.
 - Latest package SHA-256 after explicit drop-slot fix: `fb9e3053a009bf38615e5779774b190f445177b5a166de08ba04a298f391a6ce`.
 - Re-ran `swift run MacLauncher` smoke after explicit drop-slot fix: app process stayed alive for 5 seconds, then stopped cleanly.
+- Rebuilt the Phase 4 package before local install: exits 0.
+- Latest package SHA-256 before local install: `b729a42fe5d06e522a438b9b23d7419c8351395fc0bd2ae447e6dcea02bd0b67`.
+- Updated local `/Applications/MacLauncher.app` from `.build/installer/MacLauncher.app`.
+- Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
+- Ran installed app executable smoke from `/Applications/MacLauncher.app/Contents/MacOS/MacLauncher`: app process stayed alive for 5 seconds, then stopped cleanly.
 
 ## Next steps
 
-1. Open a Phase 4 PR if requested.
-2. After merge, start Phase 5 custom groups / folders.
+1. Phase 4 PR is ready from `codex/phase4-drag-drop-reorder`.
+2. After merge, return local checkout to `main` and pull latest.
