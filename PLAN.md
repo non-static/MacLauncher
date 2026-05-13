@@ -469,6 +469,18 @@ Add a modern app icon before broader release work:
 - Packaged `Info.plist` contains `CFBundleIconFile`.
 - `swift run MacLauncher` uses the bundled icon at runtime.
 
+### Current keyboard behavior slice
+Make the launcher quit directly from the keyboard:
+
+1. Add an app-local Escape key monitor in the AppKit delegate.
+2. Terminate the app instead of only closing the window.
+3. Remove the key monitor during app termination.
+
+### Acceptance criteria
+- Pressing Escape while MacLauncher is active calls `NSApp.terminate`.
+- Escape is consumed so it does not also trigger normal close/cancel behavior.
+- Existing launch, build, test, and packaging flows still pass.
+
 ---
 
 ## What not to build early
