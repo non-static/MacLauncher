@@ -6,7 +6,7 @@ Source plan: `PLAN.md`
 
 Branch:
 
-- `codex/quit-after-launch`
+- `codex/phase1-plan-update`
 
 Scope chosen for this pass:
 
@@ -17,6 +17,7 @@ Scope chosen for this pass:
 - Keyboard behavior slice: Escape quits the app
 - Settings slice from Phase 9: configurable background transparency
 - Launch behavior slice: quit after launching a selected app
+- Documentation cleanup: fold shipped features into Phase 1
 
 Reason:
 
@@ -27,6 +28,7 @@ Reason:
 - User requested Escape key exit the app instead of just closing a window.
 - User requested configurable `x%` background transparency with default `30`.
 - User requested MacLauncher exit after launching an app from the list.
+- User requested all newly added features be listed as part of Phase 1.
 
 ## Completed
 
@@ -87,6 +89,14 @@ Reason:
 - Kept failed launches open so the existing alert can show the error.
 - Added launch success/failure unit tests for callback behavior.
 - Updated `PLAN.md` with the current launch behavior slice.
+- Updated `PLAN.md` so shipped extensions now live under Phase 1:
+  - quit after successful app launch
+  - Escape quit and Settings-first Escape close behavior
+  - background transparency settings
+  - Settings button and footer hint
+  - app icon and runtime icon support
+  - local installer package
+- Removed duplicated current-slice details from Phase 9 and Phase 10, leaving notes that those pieces are already covered in Phase 1.
 
 ## Verification
 
@@ -159,6 +169,7 @@ Reason:
 - Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
 - Launched installed app from `/Applications/MacLauncher.app`; process started.
 - Re-ran `swift run MacLauncher` smoke for 3 seconds: exits 0 after test kill.
+- Documentation-only Phase 1 plan cleanup: `git diff --check` exits 0.
 - Re-ran `swift build` after Settings-first Escape behavior: exits 0.
 - Re-ran `swift test` after Settings-first Escape behavior: exits 0.
 - Re-ran `scripts/build-installer.sh`: exits 0.
