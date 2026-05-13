@@ -14,6 +14,7 @@ BUILD_DIR="$ROOT_DIR/.build/installer"
 APP_BUNDLE="$BUILD_DIR/$APP_NAME.app"
 PKG_ROOT="$BUILD_DIR/pkgroot"
 PKG_OUTPUT="${PKG_OUTPUT:-$BUILD_DIR/$APP_NAME-$VERSION.pkg}"
+ICON_SOURCE="$ROOT_DIR/Sources/MacLauncher/Resources/AppIcon.icns"
 
 if ! command -v swift >/dev/null 2>&1; then
     echo "error: swift not found" >&2
@@ -41,6 +42,10 @@ BIN_DIR="$(swift build \
 
 install -m 755 "$BIN_DIR/$APP_NAME" "$APP_BUNDLE/Contents/MacOS/$APP_NAME"
 
+if [[ -f "$ICON_SOURCE" ]]; then
+    install -m 644 "$ICON_SOURCE" "$APP_BUNDLE/Contents/Resources/AppIcon.icns"
+fi
+
 cat >"$APP_BUNDLE/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -58,6 +63,8 @@ cat >"$APP_BUNDLE/Contents/Info.plist" <<PLIST
     <string>$APP_NAME</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>CFBundleShortVersionString</key>
     <string>$VERSION</string>
     <key>CFBundleVersion</key>

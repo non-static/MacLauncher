@@ -425,7 +425,7 @@ A realistic app you can distribute or use daily.
 
 ### Tasks
 - Local installer package
-- App icon
+- App icon and logo assets
 - Versioning
 - archive/release config
 - code signing
@@ -450,6 +450,24 @@ Build a local installer before full release readiness:
 - Generated package lists `/Applications/MacLauncher.app` in its payload.
 - Script works without Xcode project files.
 - README explains package build and install commands.
+
+### Current icon slice
+Add a modern app icon before broader release work:
+
+1. Create a vector source logo in `Assets/AppIcon/AppIcon.svg`.
+2. Generate a preview PNG for README display.
+3. Generate `Sources/MacLauncher/Resources/AppIcon.icns`.
+4. Include the icon in the SwiftPM executable resources.
+5. Copy the icon into packaged app bundles and set `CFBundleIconFile`.
+6. Set the runtime app icon when launching through `swift run`.
+
+### Acceptance criteria
+- README shows the app icon.
+- `scripts/generate-app-icon.swift` regenerates PNG and `.icns` outputs.
+- `swift build` includes executable resources without breaking tests.
+- `scripts/build-installer.sh` packages `Contents/Resources/AppIcon.icns`.
+- Packaged `Info.plist` contains `CFBundleIconFile`.
+- `swift run MacLauncher` uses the bundled icon at runtime.
 
 ---
 

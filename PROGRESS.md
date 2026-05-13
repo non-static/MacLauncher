@@ -6,19 +6,21 @@ Source plan: `PLAN.md`
 
 Branch:
 
-- `codex/installer-package`
+- `codex/app-logo`
 
 Scope chosen for this pass:
 
 - Phase 0: project bootstrap
 - Phase 1: smallest working launcher
 - Packaging slice from Phase 10: local installer package
+- Icon slice from Phase 10: modern app logo and `.icns`
 
 Reason:
 
 - Repo started with only `PLAN.md` and `LICENSE`.
 - Plan says to build one working vertical slice at a time.
 - User requested installer package before continuing product features.
+- User requested a modern app logo with no strict visual constraints.
 
 ## Completed
 
@@ -50,6 +52,13 @@ Reason:
 - Added local package docs to README.
 - Updated `PLAN.md` with the current Phase 10 packaging slice.
 - Hardened packaging script to create custom output directories and suppress avoidable copyfile metadata.
+- Created modern vector logo source at `Assets/AppIcon/AppIcon.svg`.
+- Added Swift icon generator at `scripts/generate-app-icon.swift`.
+- Added README icon preview wiring.
+- Added executable resource wiring for `Sources/MacLauncher/Resources/AppIcon.icns`.
+- Updated installer packaging to copy `AppIcon.icns` and set `CFBundleIconFile`.
+- Updated `LauncherAppDelegate` to set `NSApp.applicationIconImage` from the bundled icon at runtime for `swift run`.
+- Updated `PLAN.md` with the current icon slice.
 
 ## Verification
 
@@ -80,6 +89,24 @@ Reason:
 - Verified package payload includes `./Applications/MacLauncher.app`.
 - Re-ran `swift test`: exits 0.
 - Ran packaged app executable smoke for 3 seconds: exits 0 after test kill.
+- Ran `scripts/generate-app-icon.swift`: exits 0.
+- Generated `Assets/AppIcon/AppIcon.png` at 1024x1024.
+- Generated `Sources/MacLauncher/Resources/AppIcon.icns` at 1024x1024.
+- Re-ran `swift test`: exits 0 with executable resources enabled.
+- Re-ran `scripts/build-installer.sh`: exits 0.
+- Latest icon package SHA-256: `d5ac29dc43cfa6cb350f555a15277bb2f1f9e1d0510763e48b05703cb37a26dc`.
+- Verified packaged `Info.plist` has `CFBundleIconFile` set to `AppIcon`.
+- Verified package payload includes `Contents/Resources/AppIcon.icns`.
+- Verified packaged app signature with `codesign --verify --deep --strict --verbose=2`.
+- Ran packaged app executable smoke for 3 seconds: exits 0 after test kill.
+- User reported `swift run MacLauncher` still shows the default icon.
+- Root cause: SwiftPM `swift run` launches the executable with resources in a sidecar bundle, not the packaged app `Info.plist`, so `CFBundleIconFile` is not enough for that path.
+- Added runtime icon assignment from `Bundle.module`.
+- Re-ran `swift test`: exits 0.
+- Re-ran `swift build`: exits 0.
+- Re-ran `swift run MacLauncher` smoke for 3 seconds: exits 0 after test kill.
+- Re-ran `scripts/build-installer.sh`: exits 0.
+- Latest package SHA-256 after runtime icon fix: `243cbb36a66848b4eaafbd48f1360a4d16316a6adc2ea70afd325204acb61a06`.
 
 ## Next steps
 

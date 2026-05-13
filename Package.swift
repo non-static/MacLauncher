@@ -37,7 +37,10 @@ let package = Package(
         .target(name: "MacLauncherCore"),
         .executableTarget(
             name: "MacLauncher",
-            dependencies: ["MacLauncherCore"]
+            dependencies: ["MacLauncherCore"],
+            resources: [
+                .copy("Resources")
+            ]
         ),
         .testTarget(
             name: "MacLauncherCoreTests",
