@@ -285,11 +285,13 @@ The launcher becomes truly usable.
 3. Keyboard focus should start in search when the window opens.
 4. Add arrow-key navigation for tiles if feasible.
 5. Pressing Enter launches the selected item.
+6. Pressing Escape with search text clears search and restores the launcher-loaded state.
 
 ### Acceptance criteria
 - Typing filters the app grid immediately.
 - Hitting Enter launches the highlighted app.
 - Clearing search restores all apps.
+- Pressing Escape after typing in search does not exit MacLauncher; it clears search and returns to the full app grid.
 
 ### Design note
 Start with an in-memory search filter. Do not build a complex search index yet.
@@ -301,9 +303,10 @@ Start with an in-memory search filter. Do not build a complex search index yet.
 - The first visible app is highlighted automatically.
 - Arrow keys move the highlighted app within the visible grid.
 - Enter launches the highlighted app.
+- Escape clears a non-empty search and restores the full app grid instead of exiting the app.
 - Empty search results show a dedicated no-match state.
 - Unit tests cover filtering, clearing search, selection movement, selection reconciliation, and launching the highlighted app.
-- Phase 2 build has been installed locally to `/Applications/MacLauncher.app` for manual use.
+- Phase 2 Escape-clear build has been installed locally to `/Applications/MacLauncher.app` for manual use.
 
 ---
 

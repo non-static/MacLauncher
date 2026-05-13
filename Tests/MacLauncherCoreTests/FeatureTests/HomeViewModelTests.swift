@@ -101,6 +101,45 @@ struct HomeViewModelTests {
     }
 
     @Test
+    func resetSearchToLoadedStateClearsQueryAndSelectsFirstApp() {
+        let apps = [
+            makeApp(id: "com.example.safari", name: "Safari"),
+            makeApp(id: "com.example.terminal", name: "Terminal"),
+            makeApp(id: "com.example.preview", name: "Preview")
+        ]
+        let viewModel = HomeViewModel(
+            catalogService: StubCatalogService(apps: apps),
+            launchService: StubLaunchService()
+        )
+
+        viewModel.refresh()
+        viewModel.moveSelection(by: 2)
+        viewModel.searchQuery = "ter"
+
+        let didReset = viewModel.resetSearchToLoadedState()
+
+        #expect(didReset)
+        #expect(viewModel.searchQuery.isEmpty)
+        #expect(viewModel.apps == apps)
+        #expect(viewModel.selectedAppID == apps[0].id)
+    }
+
+    @Test
+    func resetSearchToLoadedStateReturnsFalseWhenQueryIsEmpty() {
+        let app = makeApp()
+        let viewModel = HomeViewModel(
+            catalogService: StubCatalogService(apps: [app]),
+            launchService: StubLaunchService()
+        )
+
+        viewModel.refresh()
+
+        #expect(viewModel.resetSearchToLoadedState() == false)
+        #expect(viewModel.apps == [app])
+        #expect(viewModel.selectedAppID == app.id)
+    }
+
+    @Test
     func successfulLaunchRunsSuccessHandler() async {
         let app = makeApp()
         var didRunSuccessHandler = false

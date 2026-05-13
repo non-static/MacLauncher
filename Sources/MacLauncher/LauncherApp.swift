@@ -31,7 +31,8 @@ struct MacLauncherApp: App {
             LauncherRootView(
                 viewModel: viewModel,
                 iconLoader: container.iconLoader,
-                backgroundTransparencyPercent: backgroundTransparencyPercent
+                backgroundTransparencyPercent: backgroundTransparencyPercent,
+                appDelegate: appDelegate
             )
             .frame(minWidth: 720, minHeight: 520)
             .background(WindowTransparencyConfigurator())
@@ -60,6 +61,7 @@ private struct LauncherRootView: View {
     let viewModel: HomeViewModel
     let iconLoader: any AppIconLoading
     let backgroundTransparencyPercent: Double
+    let appDelegate: LauncherAppDelegate
 
     var body: some View {
         HomeView(
@@ -68,6 +70,12 @@ private struct LauncherRootView: View {
             backgroundTransparencyPercent: backgroundTransparencyPercent,
             onOpenSettings: {
                 openSettings()
+            },
+            onRegisterEscapeHandler: { handler in
+                appDelegate.launcherEscapeHandler = handler
+            },
+            onUnregisterEscapeHandler: {
+                appDelegate.launcherEscapeHandler = nil
             }
         )
     }
