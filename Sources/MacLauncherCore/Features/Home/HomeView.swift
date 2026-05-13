@@ -3,17 +3,35 @@ import SwiftUI
 public struct HomeView: View {
     @ObservedObject private var viewModel: HomeViewModel
     private let iconLoader: any AppIconLoading
+    private let backgroundTransparencyPercent: Double
+    private let onOpenSettings: () -> Void
 
-    public init(viewModel: HomeViewModel, iconLoader: any AppIconLoading) {
+    public init(
+        viewModel: HomeViewModel,
+        iconLoader: any AppIconLoading,
+        backgroundTransparencyPercent: Double,
+        onOpenSettings: @escaping () -> Void
+    ) {
         self.viewModel = viewModel
         self.iconLoader = iconLoader
+        self.backgroundTransparencyPercent = backgroundTransparencyPercent
+        self.onOpenSettings = onOpenSettings
     }
 
     public var body: some View {
-        VStack(spacing: 0) {
-            header
-            Divider()
-            content
+        ZStack {
+            LauncherBackgroundView(
+                transparencyPercent: backgroundTransparencyPercent
+            )
+            .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                header
+                Divider()
+                content
+                Divider()
+                footer
+            }
         }
         .onAppear {
             if viewModel.apps.isEmpty {
@@ -52,6 +70,12 @@ public struct HomeView: View {
             Spacer()
 
             Button {
+                onOpenSettings()
+            } label: {
+                Label("Settings", systemImage: "gearshape")
+            }
+
+            Button {
                 viewModel.refresh()
             } label: {
                 Label("Refresh", systemImage: "arrow.clockwise")
@@ -60,6 +84,18 @@ public struct HomeView: View {
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 16)
+    }
+
+    private var footer: some View {
+        HStack {
+            Spacer()
+            Text("Command-, opens Settings")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Spacer()
+        }
+        .padding(.horizontal, 24)
+        .padding(.vertical, 10)
     }
 
     @ViewBuilder
@@ -80,5 +116,30 @@ public struct HomeView: View {
                 onLaunch: viewModel.launch
             )
         }
+    }
+}
+
+private struct LauncherBackgroundView: View {
+    let transparencyPercent: Double
+
+    private var opacity: Double {
+        let clamped = min(max(transparencyPercent, 0), 100)
+        return (100 - clamped) / 100
+    }
+
+    var body: some View {
+        Rectangle()
+            .fill(.regularMaterial)
+            .overlay(
+                LinearGradient(
+                    colors: [
+                        Color(nsColor: .windowBackgroundColor).opacity(0.9),
+                        Color(nsColor: .controlBackgroundColor).opacity(0.72)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .opacity(opacity)
     }
 }

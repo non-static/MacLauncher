@@ -73,6 +73,13 @@ Completed vertical slice:
 - build a local `.pkg` installer that installs `MacLauncher.app` into `/Applications`
 - modern app logo and packaged `.icns` app icon
 - runtime app icon when launched through `swift run`
+- background transparency setting, defaulting to 30%
+
+## Settings
+
+Open macOS app settings with `Command-,`.
+
+- `Background Transparency`: controls how transparent the launcher window background is, from `0%` opaque to `100%` clear. The default is `30%`.
 
 Not yet implemented:
 

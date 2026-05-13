@@ -411,10 +411,32 @@ The app is usable by real users, not just developers.
 - Change number of columns or adaptive sizing
 - Set startup behavior
 - Set hotkey
+- Configure launcher background transparency
 
 ### Acceptance criteria
 - Settings persist.
 - Changes apply cleanly.
+
+### Current settings slice
+Add configurable launcher background transparency:
+
+1. Store a background transparency percentage setting with default `30`.
+2. Add a Settings window control for `0...100%` transparency.
+3. Apply the setting to the launcher background immediately.
+4. Configure the macOS window as non-opaque so transparency is visible.
+5. Add a Settings button beside Refresh in the main launcher UI.
+6. Add a bottom hint that `Command-,` opens Settings.
+7. Make Escape close Settings first, then quit the app on the next Escape.
+
+### Acceptance criteria
+- Default transparency is `30%`.
+- Settings page exposes a slider and current percent value.
+- Main UI exposes a Settings button beside Refresh.
+- Main UI shows a bottom `Command-,` settings hint.
+- Escape closes an open Settings window before quitting the app.
+- Setting persists across relaunch via app storage.
+- Main window background opacity updates from the setting.
+- Build, test, package, and installed app smoke flows still pass.
 
 ---
 
