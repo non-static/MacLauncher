@@ -332,6 +332,15 @@ Reason:
 - Re-ran `scripts/build-installer.sh` after first/offscreen drag fix: exits 0.
 - Latest package SHA-256 after first/offscreen drag fix: `ec625c25587b5303d8f407536bf45a9505979739ca47b6e79434ea1c5aa0cbf0`.
 - Re-ran `swift run MacLauncher` smoke after first/offscreen drag fix: app process stayed alive for 5 seconds, then stopped cleanly.
+- Added explicit leading/trailing drop slots for each tile instead of relying on full-tile half detection.
+- Drop slots extend into grid gaps, making the before-first and after-last positions easier to hit.
+- Added top and bottom drag zones that move the insertion target by one rendered row and scroll toward it during drag.
+- Re-ran `git diff --check` after explicit drop-slot fix: exits 0.
+- Re-ran `swift build` after explicit drop-slot fix: exits 0.
+- Re-ran `swift test` after explicit drop-slot fix: exits 0.
+- Re-ran `scripts/build-installer.sh` after explicit drop-slot fix: exits 0.
+- Latest package SHA-256 after explicit drop-slot fix: `fb9e3053a009bf38615e5779774b190f445177b5a166de08ba04a298f391a6ce`.
+- Re-ran `swift run MacLauncher` smoke after explicit drop-slot fix: app process stayed alive for 5 seconds, then stopped cleanly.
 
 ## Next steps
 

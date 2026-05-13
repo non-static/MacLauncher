@@ -375,6 +375,8 @@ Keep drag/drop logic in the grid feature layer, not in the domain model.
 - Drag-over uses a move drop proposal, so the UI does not show the `+` copy/group badge.
 - Drag/drop supports index-based insertion before the first tile and after the last tile.
 - Drag hover scrolls the target tile into view so users can continue moving toward offscreen positions.
+- Top and bottom drag zones scroll by grid rows so users can reach currently invisible positions during a drag.
+- Drop slots extend into gaps around tiles so before-first and after-last positions are easier to target.
 - Unit tests cover persisted drag/drop order, reload survival, and invalid-drop safety.
 
 ---

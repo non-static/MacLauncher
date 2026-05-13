@@ -13,6 +13,7 @@ public struct AppGridView: View {
 
     @State private var draggedAppID: AppItem.ID?
     @State private var dropTarget: AppGridDropTarget?
+    @State private var scrollRequest: AppGridScrollRequest?
 
     private let columns = [
         GridItem(.adaptive(minimum: LauncherDesign.tileMinWidth), spacing: Self.gridSpacing)
@@ -20,6 +21,8 @@ public struct AppGridView: View {
 
     private static let gridSpacing: CGFloat = 18
     private static let gridPadding: CGFloat = 24
+    private static let edgeScrollZoneHeight: CGFloat = 52
+    private static let dropSlotWidth = (LauncherDesign.tileWidth / 2) + gridSpacing
 
     public init(
         apps: [AppItem],
@@ -47,50 +50,69 @@ public struct AppGridView: View {
                 ScrollView {
                     LazyVGrid(columns: columns, spacing: Self.gridSpacing) {
                         ForEach(Array(apps.enumerated()), id: \.element.id) { index, app in
-                            Button {
-                                onLaunch(app)
-                            } label: {
-                                AppTileView(
+                            ZStack {
+                                Button {
+                                    onLaunch(app)
+                                } label: {
+                                    AppTileView(
+                                        app: app,
+                                        iconLoader: iconLoader,
+                                        isSelected: app.id == selectedAppID,
+                                        dropIndicator: dropIndicator(for: app.id)
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                                .id(app.id)
+                                .onDrag {
+                                    draggedAppID = app.id
+                                    return NSItemProvider(object: app.id as NSString)
+                                }
+                                .contextMenu {
+                                    Button("Move Earlier") {
+                                        onMoveInLayout(app, -1)
+                                    }
+
+                                    Button("Move Later") {
+                                        onMoveInLayout(app, 1)
+                                    }
+
+                                    Divider()
+
+                                    Button("Hide App") {
+                                        onHide(app)
+                                    }
+                                }
+
+                                dropSlot(
                                     app: app,
-                                    iconLoader: iconLoader,
-                                    isSelected: app.id == selectedAppID,
-                                    dropIndicator: dropIndicator(for: app.id)
+                                    insertionIndex: index,
+                                    indicator: .before
                                 )
-                            }
-                            .buttonStyle(.plain)
-                            .id(app.id)
-                            .onDrag {
-                                draggedAppID = app.id
-                                return NSItemProvider(object: app.id as NSString)
-                            }
-                            .onDrop(
-                                of: [UTType.plainText],
-                                delegate: AppTileDropDelegate(
+                                .frame(maxWidth: .infinity, alignment: .leading)
+
+                                dropSlot(
                                     app: app,
-                                    appIndex: index,
-                                    draggedAppID: $draggedAppID,
-                                    dropTarget: $dropTarget,
-                                    onReorder: onReorder
+                                    insertionIndex: index + 1,
+                                    indicator: .after
                                 )
-                            )
-                            .contextMenu {
-                                Button("Move Earlier") {
-                                    onMoveInLayout(app, -1)
-                                }
-
-                                Button("Move Later") {
-                                    onMoveInLayout(app, 1)
-                                }
-
-                                Divider()
-
-                                Button("Hide App") {
-                                    onHide(app)
-                                }
+                                .frame(maxWidth: .infinity, alignment: .trailing)
                             }
+                            .frame(width: LauncherDesign.tileWidth, height: LauncherDesign.tileHeight)
                         }
                     }
                     .padding(Self.gridPadding)
+                }
+                .overlay(alignment: .top) {
+                    edgeScrollZone(
+                        edge: .top,
+                        rowStride: Self.estimatedColumnCount(for: geometry.size.width)
+                    )
+                }
+                .overlay(alignment: .bottom) {
+                    edgeScrollZone(
+                        edge: .bottom,
+                        rowStride: Self.estimatedColumnCount(for: geometry.size.width)
+                    )
                 }
                 .onAppear {
                     reportColumnCount(for: geometry.size.width)
@@ -108,6 +130,15 @@ public struct AppGridView: View {
                 }
                 .onChange(of: dropTarget) { _, _ in
                     scrollToDropTarget(with: proxy)
+                }
+                .onChange(of: scrollRequest) { _, request in
+                    guard let request else {
+                        return
+                    }
+
+                    withAnimation(.easeInOut(duration: 0.16)) {
+                        proxy.scrollTo(request.appID, anchor: request.anchor)
+                    }
                 }
             }
         }
@@ -159,6 +190,69 @@ public struct AppGridView: View {
             proxy.scrollTo(dropTarget.appID, anchor: .center)
         }
     }
+
+    private func dropSlot(
+        app: AppItem,
+        insertionIndex: Int,
+        indicator: AppTileDropIndicator
+    ) -> some View {
+        Color.clear
+            .frame(width: Self.dropSlotWidth, height: LauncherDesign.tileHeight)
+            .offset(x: indicator == .before ? -(Self.gridSpacing / 2) : Self.gridSpacing / 2)
+            .contentShape(Rectangle())
+            .allowsHitTesting(draggedAppID != nil)
+            .onDrop(
+                of: [UTType.plainText],
+                delegate: AppGridDropDelegate(
+                    target: AppGridDropTarget(
+                        appID: app.id,
+                        insertionIndex: insertionIndex,
+                        indicator: indicator
+                    ),
+                    appIDs: apps.map(\.id),
+                    draggedAppID: $draggedAppID,
+                    dropTarget: $dropTarget,
+                    onReorder: onReorder
+                )
+            )
+    }
+
+    private func edgeScrollZone(
+        edge: AppGridEdge,
+        rowStride: Int
+    ) -> some View {
+        Color.clear
+            .frame(height: Self.edgeScrollZoneHeight)
+            .contentShape(Rectangle())
+            .allowsHitTesting(draggedAppID != nil)
+            .onDrop(
+                of: [UTType.plainText],
+                delegate: AppGridEdgeDropDelegate(
+                    edge: edge,
+                    appIDs: apps.map(\.id),
+                    rowStride: rowStride,
+                    draggedAppID: $draggedAppID,
+                    dropTarget: $dropTarget,
+                    scrollRequest: $scrollRequest,
+                    onReorder: onReorder
+                )
+            )
+    }
+}
+
+private enum AppGridEdge {
+    case top
+    case bottom
+}
+
+private struct AppGridScrollRequest: Equatable {
+    let appID: AppItem.ID
+    let anchor: UnitPoint
+    let nonce = UUID()
+
+    static func == (lhs: AppGridScrollRequest, rhs: AppGridScrollRequest) -> Bool {
+        lhs.nonce == rhs.nonce
+    }
 }
 
 private struct AppGridDropTarget: Equatable {
@@ -167,9 +261,9 @@ private struct AppGridDropTarget: Equatable {
     let indicator: AppTileDropIndicator
 }
 
-private struct AppTileDropDelegate: DropDelegate {
-    let app: AppItem
-    let appIndex: Int
+private struct AppGridDropDelegate: DropDelegate {
+    let target: AppGridDropTarget
+    let appIDs: [AppItem.ID]
 
     @Binding var draggedAppID: AppItem.ID?
     @Binding var dropTarget: AppGridDropTarget?
@@ -177,14 +271,20 @@ private struct AppTileDropDelegate: DropDelegate {
     let onReorder: (AppItem.ID, Int) -> Bool
 
     func validateDrop(info: DropInfo) -> Bool {
-        guard let draggedAppID else {
+        guard let draggedAppID,
+              let currentIndex = appIDs.firstIndex(of: draggedAppID),
+              appIDs.contains(target.appID),
+              target.insertionIndex >= 0,
+              target.insertionIndex <= appIDs.count
+        else {
             return false
         }
-        return draggedAppID != app.id
+        return target.insertionIndex != currentIndex
+            && target.insertionIndex != currentIndex + 1
     }
 
     func dropUpdated(info: DropInfo) -> DropProposal? {
-        guard validateDrop(info: info), let target = target(for: info) else {
+        guard validateDrop(info: info) else {
             return DropProposal(operation: .cancel)
         }
 
@@ -193,7 +293,7 @@ private struct AppTileDropDelegate: DropDelegate {
     }
 
     func dropEntered(info: DropInfo) {
-        guard validateDrop(info: info), let target = target(for: info) else {
+        guard validateDrop(info: info) else {
             return
         }
 
@@ -203,7 +303,7 @@ private struct AppTileDropDelegate: DropDelegate {
     }
 
     func dropExited(info: DropInfo) {
-        guard dropTarget?.appID == app.id else {
+        guard dropTarget?.appID == target.appID else {
             return
         }
 
@@ -218,23 +318,110 @@ private struct AppTileDropDelegate: DropDelegate {
             dropTarget = nil
         }
 
-        guard let draggedAppID, draggedAppID != app.id, let target = target(for: info) else {
+        guard let draggedAppID, validateDrop(info: info) else {
+            return false
+        }
+
+        return onReorder(draggedAppID, target.insertionIndex)
+    }
+}
+
+private struct AppGridEdgeDropDelegate: DropDelegate {
+    let edge: AppGridEdge
+    let appIDs: [AppItem.ID]
+    let rowStride: Int
+
+    @Binding var draggedAppID: AppItem.ID?
+    @Binding var dropTarget: AppGridDropTarget?
+    @Binding var scrollRequest: AppGridScrollRequest?
+
+    let onReorder: (AppItem.ID, Int) -> Bool
+
+    func validateDrop(info: DropInfo) -> Bool {
+        target() != nil
+    }
+
+    func dropUpdated(info: DropInfo) -> DropProposal? {
+        guard let target = target() else {
+            return DropProposal(operation: .cancel)
+        }
+
+        dropTarget = target
+        scrollRequest = scrollRequest(for: target)
+        return DropProposal(operation: .move)
+    }
+
+    func dropEntered(info: DropInfo) {
+        guard let target = target() else {
+            return
+        }
+
+        dropTarget = target
+        scrollRequest = scrollRequest(for: target)
+    }
+
+    func dropExited(info: DropInfo) {
+        dropTarget = nil
+    }
+
+    func performDrop(info: DropInfo) -> Bool {
+        defer {
+            draggedAppID = nil
+            dropTarget = nil
+        }
+
+        guard let draggedAppID, let target = target() else {
             return false
         }
 
         return onReorder(draggedAppID, target.insertionIndex)
     }
 
-    private func target(for info: DropInfo) -> AppGridDropTarget? {
-        guard let draggedAppID, draggedAppID != app.id else {
+    private func target() -> AppGridDropTarget? {
+        guard let draggedAppID,
+              let currentIndex = appIDs.firstIndex(of: draggedAppID),
+              appIDs.isEmpty == false
+        else {
             return nil
         }
 
-        let isBeforeTarget = info.location.x < LauncherDesign.tileWidth / 2
+        let stride = max(1, rowStride)
+        let baseIndex = dropTarget?.insertionIndex ?? currentIndex
+        let insertionIndex: Int
+        switch edge {
+        case .top:
+            insertionIndex = max(0, baseIndex - stride)
+        case .bottom:
+            insertionIndex = min(appIDs.count, baseIndex + stride)
+        }
+
+        guard insertionIndex != currentIndex,
+              insertionIndex != currentIndex + 1
+        else {
+            return nil
+        }
+
+        let indicator: AppTileDropIndicator
+        let targetAppID: AppItem.ID
+        if insertionIndex == appIDs.count {
+            targetAppID = appIDs[appIDs.count - 1]
+            indicator = .after
+        } else {
+            targetAppID = appIDs[insertionIndex]
+            indicator = .before
+        }
+
         return AppGridDropTarget(
-            appID: app.id,
-            insertionIndex: isBeforeTarget ? appIndex : appIndex + 1,
-            indicator: isBeforeTarget ? .before : .after
+            appID: targetAppID,
+            insertionIndex: insertionIndex,
+            indicator: indicator
+        )
+    }
+
+    private func scrollRequest(for target: AppGridDropTarget) -> AppGridScrollRequest {
+        AppGridScrollRequest(
+            appID: target.appID,
+            anchor: edge == .top ? .top : .bottom
         )
     }
 }

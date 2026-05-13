@@ -43,8 +43,8 @@ public struct AppTileView: View {
         .frame(width: LauncherDesign.tileWidth, height: LauncherDesign.tileHeight)
         .background(tileBackground)
         .overlay(tileBorder)
-        .overlay(dropIndicatorView)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay(dropIndicatorView)
         .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .onHover { isHovered = $0 }
         .accessibilityLabel(app.name)
