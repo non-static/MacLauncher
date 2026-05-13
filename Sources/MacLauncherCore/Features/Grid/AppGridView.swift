@@ -155,6 +155,10 @@ private struct AppTileDropDelegate: DropDelegate {
         return draggedAppID != app.id
     }
 
+    func dropUpdated(info: DropInfo) -> DropProposal? {
+        DropProposal(operation: validateDrop(info: info) ? .move : .cancel)
+    }
+
     func dropEntered(info: DropInfo) {
         guard validateDrop(info: info) else {
             return

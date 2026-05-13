@@ -299,6 +299,15 @@ Reason:
 - Ran `scripts/build-installer.sh`: exits 0.
 - Latest package SHA-256 after Phase 4 drag/drop: `618b2add15fb46f68b0506fda1ce550f1f2cd50e135e551866c6ba160d1f9fa5`.
 - Ran `swift run MacLauncher` smoke: app process stayed alive for 5 seconds, then stopped cleanly.
+- Changed tile drop updates to propose `.move` for valid reorders and `.cancel` for invalid drops.
+- Drag-over no longer advertises a copy/group operation, so the UI should not show the `+` badge.
+- Updated `PLAN.md` with the Phase 4 drag-over behavior.
+- Re-ran `git diff --check` after drag operation fix: exits 0.
+- Re-ran `swift build` after drag operation fix: exits 0.
+- Re-ran `swift test` after drag operation fix: exits 0.
+- Re-ran `scripts/build-installer.sh` after drag operation fix: exits 0.
+- Latest package SHA-256 after drag operation fix: `d860f365ef2ad341d72104375f7100b3779346ab294e52545dbb3618c01ce084`.
+- Re-ran `swift run MacLauncher` smoke after drag operation fix: app process stayed alive for 5 seconds, then stopped cleanly.
 
 ## Next steps
 
