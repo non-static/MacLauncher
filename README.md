@@ -2,6 +2,8 @@
 
 MacLauncher is a native macOS launcher built with SwiftUI and AppKit.
 
+![MacLauncher icon](Assets/AppIcon/AppIcon.png)
+
 ## Requirements
 
 - macOS 15 or newer
@@ -39,6 +41,7 @@ scripts/build-installer.sh
 ```
 
 The script builds a release binary, wraps it in `MacLauncher.app`, ad-hoc signs the app, and writes an installer package to `.build/installer/MacLauncher-0.1.0.pkg`.
+The packaged app includes the app icon from `Sources/MacLauncher/Resources/AppIcon.icns`.
 
 Optional environment variables:
 
@@ -68,6 +71,8 @@ Completed vertical slice:
 - load app icons through a replaceable icon loader
 - activate and foreground the app window when launched from `swift run`
 - build a local `.pkg` installer that installs `MacLauncher.app` into `/Applications`
+- modern app logo and packaged `.icns` app icon
+- runtime app icon when launched through `swift run`
 
 Not yet implemented:
 
@@ -78,3 +83,17 @@ Not yet implemented:
 - full-screen overlay
 - global hotkey
 - notarized release package
+
+## Icon Assets
+
+Regenerate the app icon after changing the vector/source drawing:
+
+```sh
+scripts/generate-app-icon.swift
+```
+
+Tracked icon files:
+
+- `Assets/AppIcon/AppIcon.svg`
+- `Assets/AppIcon/AppIcon.png`
+- `Sources/MacLauncher/Resources/AppIcon.icns`
