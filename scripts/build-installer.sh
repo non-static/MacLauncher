@@ -6,7 +6,7 @@ export COPYFILE_DISABLE=1
 
 APP_NAME="MacLauncher"
 BUNDLE_ID="${BUNDLE_ID:-com.nonstatic.MacLauncher}"
-VERSION="${VERSION:-0.1.0}"
+VERSION="${VERSION:-0.0.1}"
 BUILD_CONFIG="${BUILD_CONFIG:-release}"
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

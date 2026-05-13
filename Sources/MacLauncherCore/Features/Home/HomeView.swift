@@ -214,12 +214,21 @@ public struct HomeView: View {
     }
 
     private var footer: some View {
-        HStack {
-            Spacer()
+        ZStack {
             Text("Command-, opens Settings")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            Spacer()
+
+            HStack {
+                Spacer()
+                Link(destination: LauncherMetadata.githubURL) {
+                    Text("\(LauncherMetadata.versionDisplay) GitHub")
+                        .font(.caption)
+                }
+                .foregroundStyle(.secondary)
+                .buttonStyle(.plain)
+                .help("Open MacLauncher on GitHub")
+            }
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 10)
@@ -273,6 +282,21 @@ public struct HomeView: View {
         viewModel.searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             ? "app.dashed"
             : "magnifyingglass"
+    }
+}
+
+private enum LauncherMetadata {
+    static let githubURL = URL(string: "https://github.com/non-static/MacLauncher")!
+    private static let fallbackVersion = "0.0.1"
+
+    static var versionDisplay: String {
+        if let bundleVersion = Bundle.main.object(
+            forInfoDictionaryKey: "CFBundleShortVersionString"
+        ) as? String, bundleVersion.isEmpty == false {
+            return "v\(bundleVersion)"
+        }
+
+        return "v\(fallbackVersion)"
     }
 }
 
