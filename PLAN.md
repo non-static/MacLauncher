@@ -302,6 +302,8 @@ Start with an in-memory search filter. Do not build a complex search index yet.
 - Search is focused when the launcher window appears.
 - The first visible app is highlighted automatically.
 - Arrow keys move the highlighted app within the visible grid.
+- Up and Down use the grid's current rendered column count, so selection moves to the visual tile above or below.
+- The grid scrolls automatically to keep the highlighted app in view.
 - Enter launches the highlighted app.
 - Escape clears a non-empty search and restores the full app grid instead of exiting the app.
 - Empty search results show a dedicated no-match state.

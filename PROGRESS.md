@@ -264,6 +264,16 @@ Reason:
 - Ran `scripts/build-installer.sh`: exits 0.
 - Latest package SHA-256 after Phase 3 layout persistence: `60c01c9a662fd6cf2080b50bffb8f3359711b38106f435faaa2637115cec32d8`.
 - Ran `swift run MacLauncher` smoke: app process stayed alive for 5 seconds, then stopped cleanly.
+- Fixed arrow-key navigation using actual rendered grid columns instead of a hardcoded row stride.
+- Added automatic scrolling to keep the selected tile visible when keyboard navigation moves off-screen.
+- Added a grid column-count unit test.
+- Updated `PLAN.md` to document corrected Phase 2 keyboard navigation behavior.
+- Re-ran `git diff --check` after keyboard navigation fix: exits 0.
+- Re-ran `swift build` after keyboard navigation fix: exits 0.
+- Re-ran `swift test` after keyboard navigation fix: exits 0.
+- Re-ran `scripts/build-installer.sh` after keyboard navigation fix: exits 0.
+- Latest package SHA-256 after keyboard navigation fix: `15aa4cea50689a53c7b09f4b9a9836ae99ec9888010c0423acdaa01270bc9a72`.
+- Re-ran `swift run MacLauncher` smoke after keyboard navigation fix: app process stayed alive for 5 seconds, then stopped cleanly.
 
 ## Next steps
 
