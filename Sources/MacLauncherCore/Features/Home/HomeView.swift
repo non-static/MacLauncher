@@ -111,15 +111,18 @@ public struct HomeView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("MacLauncher")
                     .font(.title2.weight(.semibold))
-                Text("\(viewModel.apps.count) of \(viewModel.totalAppCount) apps")
+                Text(appCountSummary)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .lineLimit(2)
             }
-            .frame(width: 150, alignment: .leading)
+            .frame(width: 180, alignment: .leading)
 
             searchField
 
             Spacer(minLength: 8)
+
+            layoutMenu
 
             Button {
                 onOpenSettings()
@@ -136,6 +139,43 @@ public struct HomeView: View {
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 16)
+    }
+
+    private var appCountSummary: String {
+        if viewModel.hiddenAppCount > 0 {
+            return "\(viewModel.apps.count) of \(viewModel.totalAppCount) apps, \(viewModel.hiddenAppCount) hidden"
+        }
+        return "\(viewModel.apps.count) of \(viewModel.totalAppCount) apps"
+    }
+
+    private var layoutMenu: some View {
+        Menu {
+            Button("Move Earlier") {
+                viewModel.moveSelectedAppInLayout(by: -1)
+            }
+            .disabled(viewModel.selectedApp == nil)
+
+            Button("Move Later") {
+                viewModel.moveSelectedAppInLayout(by: 1)
+            }
+            .disabled(viewModel.selectedApp == nil)
+
+            Divider()
+
+            Button("Hide Selected App") {
+                viewModel.hideSelectedApp()
+            }
+            .disabled(viewModel.selectedApp == nil)
+
+            Divider()
+
+            Button("Reset Layout", role: .destructive) {
+                viewModel.resetLayout()
+            }
+        } label: {
+            Label("Layout", systemImage: "square.grid.3x3")
+        }
+        .help("Layout")
     }
 
     private var searchField: some View {
@@ -202,6 +242,12 @@ public struct HomeView: View {
                 selectedAppID: viewModel.selectedAppID,
                 onLaunch: { app in
                     viewModel.launch(app)
+                },
+                onHide: { app in
+                    viewModel.hideApp(app)
+                },
+                onMoveInLayout: { app, offset in
+                    viewModel.moveAppInLayout(app, by: offset)
                 }
             )
         }

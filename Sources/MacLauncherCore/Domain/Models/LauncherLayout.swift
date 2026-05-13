@@ -1,6 +1,8 @@
 import Foundation
 
 public struct LauncherLayout: Codable, Equatable, Sendable {
+    public static let currentVersion = 1
+
     public var orderedAppIDs: [String]
     public var groups: [AppGroup]
     public var hiddenAppIDs: Set<String>
@@ -10,7 +12,7 @@ public struct LauncherLayout: Codable, Equatable, Sendable {
         orderedAppIDs: [String] = [],
         groups: [AppGroup] = [],
         hiddenAppIDs: Set<String> = [],
-        version: Int = 1
+        version: Int = LauncherLayout.currentVersion
     ) {
         self.orderedAppIDs = orderedAppIDs
         self.groups = groups

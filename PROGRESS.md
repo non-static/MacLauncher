@@ -6,16 +6,16 @@ Source plan: `PLAN.md`
 
 Branch:
 
-- `codex/phase2-esc-clears-search`
+- `codex/phase3-layout-persistence`
 
 Scope chosen for this pass:
 
-- Phase 2 extension: Escape clears search input
+- Phase 3: layout persistence
 
 Reason:
 
-- User requested that pressing Escape after typing search text clear the input and restore the loaded launcher state instead of exiting the app.
-- User requested this behavior be added to Phase 2 in `PLAN.md`.
+- User requested executing Phase 3 from `PLAN.md`.
+- Phase 3 adds persisted custom order, hidden apps, startup restore, and reset layout.
 
 ## Completed
 
@@ -230,8 +230,42 @@ Reason:
 - Updated local `/Applications/MacLauncher.app` from `.build/installer/MacLauncher.app`.
 - Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
 - Ran installed app executable smoke from `/Applications/MacLauncher.app/Contents/MacOS/MacLauncher`: exits 0 after launch window cycle.
+- Wired `JSONLayoutStore` into the live app through `AppContainer`.
+- Added `LauncherLayout.currentVersion`.
+- `HomeViewModel` now loads layout once before presenting scanned apps.
+- Persisted layout controls:
+  - ordered app IDs
+  - hidden app IDs
+  - layout version
+- Added safe fallback to scanned app order when layout load fails or version is unsupported.
+- Added hidden-app filtering before search filtering.
+- Added Layout menu actions:
+  - Move Earlier
+  - Move Later
+  - Hide Selected App
+  - Reset Layout
+- Added tile context-menu actions:
+  - Move Earlier
+  - Move Later
+  - Hide App
+- Reset Layout restores scanned order and clears hidden apps.
+- Updated `PLAN.md` with Phase 3 implementation details.
+- Added unit tests for:
+  - persisted custom order
+  - hidden app restore
+  - hide persistence
+  - custom order persistence
+  - reset layout
+  - layout load failure fallback
+  - unsupported layout version fallback
+- Ran `git diff --check`: exits 0.
+- Ran `swift build`: exits 0.
+- Ran `swift test`: exits 0.
+- Ran `scripts/build-installer.sh`: exits 0.
+- Latest package SHA-256 after Phase 3 layout persistence: `60c01c9a662fd6cf2080b50bffb8f3359711b38106f435faaa2637115cec32d8`.
+- Ran `swift run MacLauncher` smoke: app process stayed alive for 5 seconds, then stopped cleanly.
 
 ## Next steps
 
-1. Open the Escape-clear-search PR from `codex/phase2-esc-clears-search`.
-2. After merge, return local checkout to `main` and pull latest.
+1. Open a Phase 3 PR if requested.
+2. After merge, start Phase 4 drag-and-drop reordering.

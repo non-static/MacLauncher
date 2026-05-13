@@ -19,6 +19,7 @@ struct MacLauncherApp: App {
             wrappedValue: HomeViewModel(
                 catalogService: container.catalogService,
                 launchService: container.launchService,
+                layoutStore: container.layoutStore,
                 onSuccessfulLaunch: {
                     NSApp.terminate(nil)
                 }

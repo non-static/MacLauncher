@@ -331,6 +331,17 @@ The app remembers basic organization state.
 ### Design note
 Use file versioning in the JSON so future migrations are possible.
 
+### Implemented in this Phase 3 pass
+- `JSONLayoutStore` is wired into the live app through `AppContainer`.
+- Layout loads from Application Support before app list presentation.
+- Layout saves ordered app IDs, hidden app IDs, and schema version `1`.
+- Corrupt or unsupported-version layout files fall back to the default scanned app list.
+- The Layout menu supports moving the selected app earlier or later.
+- Tile context menus support moving or hiding individual apps.
+- Hiding apps persists and removes them from the grid.
+- Reset Layout restores scanned order and clears hidden apps.
+- Unit tests cover persisted order, hidden apps, custom order saving, reset, load failure fallback, and unsupported layout versions.
+
 ---
 
 ## Phase 4 — Drag-and-drop reordering
