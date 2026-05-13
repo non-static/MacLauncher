@@ -249,6 +249,7 @@ This is the first true vertical slice. Keep it brutally small.
 - The app shows a grid of installed apps.
 - Clicking an app launches it.
 - MacLauncher exits after a successful app launch.
+- MacLauncher still exits after an accepted launch request if `NSWorkspace` delays its completion callback.
 - Failed launches leave MacLauncher open and show an error.
 - Refresh updates the grid.
 - No crashes if an app has missing metadata.
@@ -269,6 +270,7 @@ This is the first true vertical slice. Keep it brutally small.
 - Fallback to app path if bundle identifier is missing.
 - Wrap icon loading so you can later add caching without touching the UI.
 - Keep termination behavior in the app layer via a launch-success callback.
+- Treat delayed `NSWorkspace` launch completions as accepted after a short grace period, while still surfacing immediate launch errors.
 - Keep settings persistence lightweight with app-local storage until layout persistence needs a wider store.
 - Use SwiftPM resources for the app icon so `swift run` and packaged app flows share the same icon asset.
 

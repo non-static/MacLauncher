@@ -346,8 +346,19 @@ Reason:
 - Updated local `/Applications/MacLauncher.app` from `.build/installer/MacLauncher.app`.
 - Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
 - Ran installed app executable smoke from `/Applications/MacLauncher.app/Contents/MacOS/MacLauncher`: app process stayed alive for 5 seconds, then stopped cleanly.
+- Fixed launch-exit bug after clicking or pressing Enter on an app by making `NSWorkspaceLaunchService` treat delayed `NSWorkspace` completions as accepted after a one-second grace period.
+- Immediate `NSWorkspace` launch errors still throw, so failed launches keep MacLauncher open and show the existing error.
+- Updated `PLAN.md` with the Phase 1 launch completion edge case.
+- Re-ran `git diff --check` after launch-exit fix: exits 0.
+- Re-ran `swift build` after launch-exit fix: exits 0.
+- Re-ran `swift test` after launch-exit fix: exits 0.
+- Re-ran `scripts/build-installer.sh` after launch-exit fix: exits 0.
+- Latest package SHA-256 after launch-exit fix: `0c713da43b52f40c54234ca3f7b66cf75230eda4216014c088ec686a7b01c6ca`.
+- Updated local `/Applications/MacLauncher.app` from `.build/installer/MacLauncher.app`.
+- Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
+- Ran installed app executable smoke from `/Applications/MacLauncher.app/Contents/MacOS/MacLauncher`: app process stayed alive for 5 seconds, then stopped cleanly.
 
 ## Next steps
 
-1. Phase 4 PR is ready from `codex/phase4-drag-drop-reorder`.
+1. Launch-exit fallback PR is ready from `codex/launch-exit-fallback`.
 2. After merge, return local checkout to `main` and pull latest.
