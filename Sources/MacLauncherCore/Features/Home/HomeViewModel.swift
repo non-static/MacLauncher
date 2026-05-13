@@ -115,6 +115,49 @@ public final class HomeViewModel: ObservableObject {
         selectedAppID = app.id
     }
 
+    @discardableResult
+    public func reorderAppInLayout(
+        draggedAppID: AppItem.ID,
+        targetAppID: AppItem.ID
+    ) -> Bool {
+        guard draggedAppID != targetAppID,
+              let currentIndex = visibleApps.firstIndex(where: { $0.id == draggedAppID }),
+              let targetIndex = visibleApps.firstIndex(where: { $0.id == targetAppID })
+        else {
+            return false
+        }
+
+        let insertionIndex = currentIndex < targetIndex ? targetIndex + 1 : targetIndex
+        return reorderAppInLayout(draggedAppID: draggedAppID, targetIndex: insertionIndex)
+    }
+
+    @discardableResult
+    public func reorderAppInLayout(
+        draggedAppID: AppItem.ID,
+        targetIndex: Int
+    ) -> Bool {
+        guard let currentIndex = visibleApps.firstIndex(where: { $0.id == draggedAppID }),
+              targetIndex >= 0,
+              targetIndex <= visibleApps.count,
+              targetIndex != currentIndex,
+              targetIndex != currentIndex + 1
+        else {
+            return false
+        }
+
+        var reorderedApps = visibleApps
+        let movedApp = reorderedApps.remove(at: currentIndex)
+        let insertionIndex = targetIndex > currentIndex ? targetIndex - 1 : targetIndex
+        reorderedApps.insert(movedApp, at: insertionIndex)
+        let hiddenOrderedIDs = layout.orderedAppIDs.filter { layout.hiddenAppIDs.contains($0) }
+
+        layout.orderedAppIDs = reorderedApps.map(\.id) + hiddenOrderedIDs
+        saveLayout()
+        applyLayoutAndSearch()
+        selectedAppID = draggedAppID
+        return true
+    }
+
     public func resetLayout() {
         layout = LauncherLayout(orderedAppIDs: discoveredApps.map(\.id))
         saveLayout()

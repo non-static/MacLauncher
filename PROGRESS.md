@@ -6,16 +6,16 @@ Source plan: `PLAN.md`
 
 Branch:
 
-- `codex/phase3-layout-persistence`
+- `codex/phase4-drag-drop-reorder`
 
 Scope chosen for this pass:
 
-- Phase 3: layout persistence
+- Phase 4: drag-and-drop reordering
 
 Reason:
 
-- User requested executing Phase 3 from `PLAN.md`.
-- Phase 3 adds persisted custom order, hidden apps, startup restore, and reset layout.
+- User requested executing Phase 4 from `PLAN.md`.
+- Phase 4 adds direct tile drag/drop reordering on top of Phase 3 layout persistence.
 
 ## Completed
 
@@ -279,8 +279,75 @@ Reason:
 - Updated local `/Applications/MacLauncher.app` from `.build/installer/MacLauncher.app`.
 - Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
 - Ran installed app executable smoke from `/Applications/MacLauncher.app/Contents/MacOS/MacLauncher`: app process stayed alive for 5 seconds, then stopped cleanly.
+- Added grid-local drag/drop support with `onDrag` and `DropDelegate`.
+- Dragging a tile stores the dragged app ID in grid state.
+- Dropping onto another visible app calls the view model reorder API and persists the new order.
+- Added dashed drop-target highlighting to app tiles.
+- Invalid drops are ignored without saving layout:
+  - same source/target app
+  - unknown dragged app ID
+  - missing local drag state
+- Added `HomeViewModel.reorderAppInLayout(draggedAppID:targetAppID:)`.
+- Added Phase 4 unit tests for:
+  - persisted dropped order
+  - order surviving reload through `LayoutStore`
+  - invalid drop safety
+- Updated `PLAN.md` with Phase 4 implementation details.
+- Ran `git diff --check`: exits 0.
+- Ran `swift build`: exits 0.
+- Ran `swift test`: exits 0.
+- Ran `scripts/build-installer.sh`: exits 0.
+- Latest package SHA-256 after Phase 4 drag/drop: `618b2add15fb46f68b0506fda1ce550f1f2cd50e135e551866c6ba160d1f9fa5`.
+- Ran `swift run MacLauncher` smoke: app process stayed alive for 5 seconds, then stopped cleanly.
+- Changed tile drop updates to propose `.move` for valid reorders and `.cancel` for invalid drops.
+- Drag-over no longer advertises a copy/group operation, so the UI should not show the `+` badge.
+- Updated `PLAN.md` with the Phase 4 drag-over behavior.
+- Re-ran `git diff --check` after drag operation fix: exits 0.
+- Re-ran `swift build` after drag operation fix: exits 0.
+- Re-ran `swift test` after drag operation fix: exits 0.
+- Re-ran `scripts/build-installer.sh` after drag operation fix: exits 0.
+- Latest package SHA-256 after drag operation fix: `d860f365ef2ad341d72104375f7100b3779346ab294e52545dbb3618c01ce084`.
+- Re-ran `swift run MacLauncher` smoke after drag operation fix: app process stayed alive for 5 seconds, then stopped cleanly.
+- Replaced the dashed drop-target rectangle with a slim insertion marker before or after the target tile.
+- Drop indicator direction now matches the persisted reorder result:
+  - dragging forward shows the marker after the target tile
+  - dragging backward shows the marker before the target tile
+- Updated `PLAN.md` with the insertion-marker behavior.
+- Re-ran `git diff --check` after insertion-marker fix: exits 0.
+- Re-ran `swift build` after insertion-marker fix: exits 0.
+- Re-ran `swift test` after insertion-marker fix: exits 0.
+- Re-ran `scripts/build-installer.sh` after insertion-marker fix: exits 0.
+- Latest package SHA-256 after insertion-marker fix: `9888c847768ba3e1ec9e6d86ae74f2ba6b5e12ce3457fcb099011a869fb1110a`.
+- Re-ran `swift run MacLauncher` smoke after insertion-marker fix: app process stayed alive for 5 seconds, then stopped cleanly.
+- Reworked drag/drop to use insertion indexes instead of only target app IDs.
+- Drops can now target index `0`, so an app can move to the very first position.
+- Drops can now target `apps.count`, so an app can move after the last visible tile.
+- Drop pointer position chooses before/after the hovered tile.
+- Drag hover scrolls the hovered target tile into view, allowing continued drag toward offscreen positions.
+- Added tests for moving to the first index, moving after the last index, and rejecting out-of-range indexes.
+- Updated `PLAN.md` with the first/last/offscreen drag behavior.
+- Re-ran `git diff --check` after first/offscreen drag fix: exits 0.
+- Re-ran `swift build` after first/offscreen drag fix: exits 0.
+- Re-ran `swift test` after first/offscreen drag fix: exits 0.
+- Re-ran `scripts/build-installer.sh` after first/offscreen drag fix: exits 0.
+- Latest package SHA-256 after first/offscreen drag fix: `ec625c25587b5303d8f407536bf45a9505979739ca47b6e79434ea1c5aa0cbf0`.
+- Re-ran `swift run MacLauncher` smoke after first/offscreen drag fix: app process stayed alive for 5 seconds, then stopped cleanly.
+- Added explicit leading/trailing drop slots for each tile instead of relying on full-tile half detection.
+- Drop slots extend into grid gaps, making the before-first and after-last positions easier to hit.
+- Added top and bottom drag zones that move the insertion target by one rendered row and scroll toward it during drag.
+- Re-ran `git diff --check` after explicit drop-slot fix: exits 0.
+- Re-ran `swift build` after explicit drop-slot fix: exits 0.
+- Re-ran `swift test` after explicit drop-slot fix: exits 0.
+- Re-ran `scripts/build-installer.sh` after explicit drop-slot fix: exits 0.
+- Latest package SHA-256 after explicit drop-slot fix: `fb9e3053a009bf38615e5779774b190f445177b5a166de08ba04a298f391a6ce`.
+- Re-ran `swift run MacLauncher` smoke after explicit drop-slot fix: app process stayed alive for 5 seconds, then stopped cleanly.
+- Rebuilt the Phase 4 package before local install: exits 0.
+- Latest package SHA-256 before local install: `b729a42fe5d06e522a438b9b23d7419c8351395fc0bd2ae447e6dcea02bd0b67`.
+- Updated local `/Applications/MacLauncher.app` from `.build/installer/MacLauncher.app`.
+- Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
+- Ran installed app executable smoke from `/Applications/MacLauncher.app/Contents/MacOS/MacLauncher`: app process stayed alive for 5 seconds, then stopped cleanly.
 
 ## Next steps
 
-1. Phase 3 PR is ready from `codex/phase3-layout-persistence`.
+1. Phase 4 PR is ready from `codex/phase4-drag-drop-reorder`.
 2. After merge, return local checkout to `main` and pull latest.

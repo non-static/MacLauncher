@@ -109,6 +109,157 @@ struct HomeViewModelTests {
     }
 
     @Test
+    func reorderAppInLayoutPersistsDroppedOrder() {
+        let apps = [
+            makeApp(id: "com.example.one", name: "One"),
+            makeApp(id: "com.example.two", name: "Two"),
+            makeApp(id: "com.example.three", name: "Three"),
+            makeApp(id: "com.example.four", name: "Four")
+        ]
+        let store = StubLayoutStore()
+        let viewModel = HomeViewModel(
+            catalogService: StubCatalogService(apps: apps),
+            launchService: StubLaunchService(),
+            layoutStore: store
+        )
+
+        viewModel.refresh()
+        let didReorder = viewModel.reorderAppInLayout(
+            draggedAppID: apps[0].id,
+            targetAppID: apps[2].id
+        )
+
+        #expect(didReorder)
+        #expect(viewModel.apps == [apps[1], apps[2], apps[0], apps[3]])
+        #expect(viewModel.selectedAppID == apps[0].id)
+        #expect(store.savedLayouts.last?.orderedAppIDs == [
+            apps[1].id,
+            apps[2].id,
+            apps[0].id,
+            apps[3].id
+        ])
+    }
+
+    @Test
+    func reorderAppInLayoutSurvivesRefreshFromStore() {
+        let apps = [
+            makeApp(id: "com.example.one", name: "One"),
+            makeApp(id: "com.example.two", name: "Two"),
+            makeApp(id: "com.example.three", name: "Three")
+        ]
+        let store = StubLayoutStore()
+        let firstViewModel = HomeViewModel(
+            catalogService: StubCatalogService(apps: apps),
+            launchService: StubLaunchService(),
+            layoutStore: store
+        )
+        firstViewModel.refresh()
+        firstViewModel.reorderAppInLayout(draggedAppID: apps[2].id, targetAppID: apps[0].id)
+
+        let secondViewModel = HomeViewModel(
+            catalogService: StubCatalogService(apps: apps),
+            launchService: StubLaunchService(),
+            layoutStore: store
+        )
+        secondViewModel.refresh()
+
+        #expect(secondViewModel.apps == [apps[2], apps[0], apps[1]])
+    }
+
+    @Test
+    func reorderAppInLayoutCanMoveAppToFirstIndex() {
+        let apps = [
+            makeApp(id: "com.example.one", name: "One"),
+            makeApp(id: "com.example.two", name: "Two"),
+            makeApp(id: "com.example.three", name: "Three")
+        ]
+        let store = StubLayoutStore()
+        let viewModel = HomeViewModel(
+            catalogService: StubCatalogService(apps: apps),
+            launchService: StubLaunchService(),
+            layoutStore: store
+        )
+
+        viewModel.refresh()
+        let didReorder = viewModel.reorderAppInLayout(
+            draggedAppID: apps[2].id,
+            targetIndex: 0
+        )
+
+        #expect(didReorder)
+        #expect(viewModel.apps == [apps[2], apps[0], apps[1]])
+        #expect(store.savedLayouts.last?.orderedAppIDs == [
+            apps[2].id,
+            apps[0].id,
+            apps[1].id
+        ])
+    }
+
+    @Test
+    func reorderAppInLayoutCanMoveAppAfterLastIndex() {
+        let apps = [
+            makeApp(id: "com.example.one", name: "One"),
+            makeApp(id: "com.example.two", name: "Two"),
+            makeApp(id: "com.example.three", name: "Three")
+        ]
+        let store = StubLayoutStore()
+        let viewModel = HomeViewModel(
+            catalogService: StubCatalogService(apps: apps),
+            launchService: StubLaunchService(),
+            layoutStore: store
+        )
+
+        viewModel.refresh()
+        let didReorder = viewModel.reorderAppInLayout(
+            draggedAppID: apps[0].id,
+            targetIndex: apps.count
+        )
+
+        #expect(didReorder)
+        #expect(viewModel.apps == [apps[1], apps[2], apps[0]])
+        #expect(store.savedLayouts.last?.orderedAppIDs == [
+            apps[1].id,
+            apps[2].id,
+            apps[0].id
+        ])
+    }
+
+    @Test
+    func reorderAppInLayoutRejectsInvalidDropWithoutSaving() {
+        let apps = [
+            makeApp(id: "com.example.one", name: "One"),
+            makeApp(id: "com.example.two", name: "Two")
+        ]
+        let store = StubLayoutStore()
+        let viewModel = HomeViewModel(
+            catalogService: StubCatalogService(apps: apps),
+            launchService: StubLaunchService(),
+            layoutStore: store
+        )
+
+        viewModel.refresh()
+        let saveCount = store.savedLayouts.count
+        let didReorderSameApp = viewModel.reorderAppInLayout(
+            draggedAppID: apps[0].id,
+            targetAppID: apps[0].id
+        )
+        let didReorderUnknownApp = viewModel.reorderAppInLayout(
+            draggedAppID: "missing",
+            targetAppID: apps[1].id
+        )
+        let didReorderOutOfRange = viewModel.reorderAppInLayout(
+            draggedAppID: apps[0].id,
+            targetIndex: apps.count + 1
+        )
+
+        #expect(didReorderSameApp == false)
+        #expect(didReorderUnknownApp == false)
+        #expect(didReorderOutOfRange == false)
+        #expect(viewModel.apps == apps)
+        #expect(store.savedLayouts.count == saveCount)
+    }
+
+    @Test
     func resetLayoutRestoresScannedOrderAndHiddenApps() {
         let apps = [
             makeApp(id: "com.example.one", name: "One"),

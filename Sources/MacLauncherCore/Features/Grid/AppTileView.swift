@@ -1,20 +1,29 @@
 import SwiftUI
 
+public enum AppTileDropIndicator: Equatable {
+    case none
+    case before
+    case after
+}
+
 public struct AppTileView: View {
     private let app: AppItem
     private let iconLoader: any AppIconLoading
     private let isSelected: Bool
+    private let dropIndicator: AppTileDropIndicator
 
     @State private var isHovered = false
 
     public init(
         app: AppItem,
         iconLoader: any AppIconLoading,
-        isSelected: Bool = false
+        isSelected: Bool = false,
+        dropIndicator: AppTileDropIndicator = .none
     ) {
         self.app = app
         self.iconLoader = iconLoader
         self.isSelected = isSelected
+        self.dropIndicator = dropIndicator
     }
 
     public var body: some View {
@@ -33,14 +42,9 @@ public struct AppTileView: View {
         }
         .frame(width: LauncherDesign.tileWidth, height: LauncherDesign.tileHeight)
         .background(tileBackground)
-        .overlay(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .strokeBorder(
-                    isSelected ? Color.accentColor.opacity(0.78) : Color.clear,
-                    lineWidth: 2
-                )
-        )
+        .overlay(tileBorder)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay(dropIndicatorView)
         .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .onHover { isHovered = $0 }
         .accessibilityLabel(app.name)
@@ -51,5 +55,41 @@ public struct AppTileView: View {
             return Color.accentColor.opacity(isHovered ? 0.18 : 0.12)
         }
         return isHovered ? Color.primary.opacity(0.08) : Color.clear
+    }
+
+    @ViewBuilder
+    private var tileBorder: some View {
+        let shape = RoundedRectangle(cornerRadius: 8, style: .continuous)
+
+        shape.strokeBorder(
+            isSelected ? Color.accentColor.opacity(0.78) : Color.clear,
+            lineWidth: 2
+        )
+    }
+
+    @ViewBuilder
+    private var dropIndicatorView: some View {
+        switch dropIndicator {
+        case .none:
+            EmptyView()
+        case .before:
+            HStack {
+                insertionMarker
+                Spacer()
+            }
+        case .after:
+            HStack {
+                Spacer()
+                insertionMarker
+            }
+        }
+    }
+
+    private var insertionMarker: some View {
+        Capsule()
+            .fill(Color.accentColor)
+            .frame(width: 4, height: 92)
+            .shadow(color: Color.accentColor.opacity(0.45), radius: 4)
+            .padding(.horizontal, -6)
     }
 }
