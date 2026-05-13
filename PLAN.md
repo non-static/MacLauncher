@@ -207,7 +207,7 @@ Create the full project scaffold, but keep implementation minimal. Do not invent
 ## Phase 1 — Smallest working launcher
 
 ### Outcome
-A working app that lists installed apps in a grid and launches them on click.
+A working app that lists installed apps in a grid, launches them on click, and has the minimum daily-use behavior needed for local installation.
 
 ### Scope
 This is the first true vertical slice. Keep it brutally small.
@@ -223,6 +223,17 @@ This is the first true vertical slice. Keep it brutally small.
 5. Clicking a tile launches the app.
 6. Add a manual refresh button.
 7. Add a very simple icon loader.
+8. Exit MacLauncher after a selected app launches successfully.
+9. Keep MacLauncher open and show an error if launching an app fails.
+10. Add Escape handling:
+   - Escape quits MacLauncher.
+   - If Settings is open, Escape closes Settings first; pressing Escape again quits MacLauncher.
+11. Add a Settings page with a configurable background transparency percentage.
+12. Default background transparency to `30%`.
+13. Add a Settings button beside Refresh.
+14. Add a bottom hint that `Command-,` opens Settings.
+15. Add a modern app icon and runtime app icon support.
+16. Add local packaging so the app can be installed into `/Applications`.
 
 ### Explicit non-goals
 - no folders
@@ -231,30 +242,35 @@ This is the first true vertical slice. Keep it brutally small.
 - no persistence
 - no search index beyond simple filter
 - no animation polish
+- no notarization
+- no auto-update
 
 ### Acceptance criteria
 - The app shows a grid of installed apps.
 - Clicking an app launches it.
+- MacLauncher exits after a successful app launch.
+- Failed launches leave MacLauncher open and show an error.
 - Refresh updates the grid.
 - No crashes if an app has missing metadata.
+- Escape quits MacLauncher, with Settings-first close behavior.
+- Settings includes a `0...100%` background transparency slider.
+- Default background transparency is `30%`.
+- Settings persist across relaunch.
+- Main window background opacity updates from the transparency setting.
+- Main UI includes Settings and Refresh controls.
+- Main UI hints that `Command-,` opens Settings.
+- App icon is present in both `swift run` and packaged app flows.
+- `scripts/build-installer.sh` builds a local `.pkg` installer.
+- README explains build, run, test, package, settings, and icon regeneration.
+- Unit tests cover launch success/failure callback behavior.
 
 ### Suggested implementation notes
 - Use bundle identifier as the preferred stable ID.
 - Fallback to app path if bundle identifier is missing.
 - Wrap icon loading so you can later add caching without touching the UI.
-
-### Current launch behavior slice
-Close the launcher after it successfully launches a selected app:
-
-1. Add a launch-success callback to the home view model.
-2. Call the callback only after `AppLaunchService.launch` succeeds.
-3. Terminate MacLauncher from the app layer via the callback.
-
-### Acceptance criteria
-- Clicking an app still launches it.
-- MacLauncher exits after a successful launch.
-- MacLauncher stays open and shows an error if launch fails.
-- Unit tests cover success and failure callback behavior.
+- Keep termination behavior in the app layer via a launch-success callback.
+- Keep settings persistence lightweight with app-local storage until layout persistence needs a wider store.
+- Use SwiftPM resources for the app icon so `swift run` and packaged app flows share the same icon asset.
 
 ---
 
@@ -424,32 +440,16 @@ The app is usable by real users, not just developers.
 - Change number of columns or adaptive sizing
 - Set startup behavior
 - Set hotkey
-- Configure launcher background transparency
 
 ### Acceptance criteria
 - Settings persist.
 - Changes apply cleanly.
 
-### Current settings slice
-Add configurable launcher background transparency:
-
-1. Store a background transparency percentage setting with default `30`.
-2. Add a Settings window control for `0...100%` transparency.
-3. Apply the setting to the launcher background immediately.
-4. Configure the macOS window as non-opaque so transparency is visible.
-5. Add a Settings button beside Refresh in the main launcher UI.
-6. Add a bottom hint that `Command-,` opens Settings.
-7. Make Escape close Settings first, then quit the app on the next Escape.
-
-### Acceptance criteria
-- Default transparency is `30%`.
-- Settings page exposes a slider and current percent value.
-- Main UI exposes a Settings button beside Refresh.
-- Main UI shows a bottom `Command-,` settings hint.
-- Escape closes an open Settings window before quitting the app.
-- Setting persists across relaunch via app storage.
-- Main window background opacity updates from the setting.
-- Build, test, package, and installed app smoke flows still pass.
+### Already covered in Phase 1
+- Background transparency setting.
+- Settings button beside Refresh.
+- `Command-,` Settings hint.
+- Settings-first Escape behavior.
 
 ---
 
@@ -459,8 +459,6 @@ Add configurable launcher background transparency:
 A realistic app you can distribute or use daily.
 
 ### Tasks
-- Local installer package
-- App icon and logo assets
 - Versioning
 - archive/release config
 - code signing
@@ -469,52 +467,11 @@ A realistic app you can distribute or use daily.
 - better logging
 - migration tests for layout versions
 
-### Current packaging slice
-Build a local installer before full release readiness:
-
-1. Build a release SwiftPM product.
-2. Wrap the executable in a minimal `MacLauncher.app` bundle.
-3. Add a valid `Info.plist`.
-4. Ad-hoc sign by default, with optional Developer ID app signing.
-5. Build a `.pkg` installer that places `MacLauncher.app` in `/Applications`.
-6. Allow optional Developer ID installer signing for later notarization.
-
-### Acceptance criteria
-- `scripts/build-installer.sh` builds `.build/installer/MacLauncher-<version>.pkg`.
-- Generated app bundle has a valid `Info.plist`.
-- Generated package lists `/Applications/MacLauncher.app` in its payload.
-- Script works without Xcode project files.
-- README explains package build and install commands.
-
-### Current icon slice
-Add a modern app icon before broader release work:
-
-1. Create a vector source logo in `Assets/AppIcon/AppIcon.svg`.
-2. Generate a preview PNG for README display.
-3. Generate `Sources/MacLauncher/Resources/AppIcon.icns`.
-4. Include the icon in the SwiftPM executable resources.
-5. Copy the icon into packaged app bundles and set `CFBundleIconFile`.
-6. Set the runtime app icon when launching through `swift run`.
-
-### Acceptance criteria
-- README shows the app icon.
-- `scripts/generate-app-icon.swift` regenerates PNG and `.icns` outputs.
-- `swift build` includes executable resources without breaking tests.
-- `scripts/build-installer.sh` packages `Contents/Resources/AppIcon.icns`.
-- Packaged `Info.plist` contains `CFBundleIconFile`.
-- `swift run MacLauncher` uses the bundled icon at runtime.
-
-### Current keyboard behavior slice
-Make the launcher quit directly from the keyboard:
-
-1. Add an app-local Escape key monitor in the AppKit delegate.
-2. Terminate the app instead of only closing the window.
-3. Remove the key monitor during app termination.
-
-### Acceptance criteria
-- Pressing Escape while MacLauncher is active calls `NSApp.terminate`.
-- Escape is consumed so it does not also trigger normal close/cancel behavior.
-- Existing launch, build, test, and packaging flows still pass.
+### Already covered in Phase 1
+- Local `.pkg` installer package.
+- App icon and logo assets.
+- Runtime app icon for `swift run`.
+- Escape-to-quit behavior.
 
 ---
 
