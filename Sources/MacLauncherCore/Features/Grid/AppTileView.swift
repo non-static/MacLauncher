@@ -1,10 +1,16 @@
 import SwiftUI
 
+public enum AppTileDropIndicator: Equatable {
+    case none
+    case before
+    case after
+}
+
 public struct AppTileView: View {
     private let app: AppItem
     private let iconLoader: any AppIconLoading
     private let isSelected: Bool
-    private let isDropTarget: Bool
+    private let dropIndicator: AppTileDropIndicator
 
     @State private var isHovered = false
 
@@ -12,12 +18,12 @@ public struct AppTileView: View {
         app: AppItem,
         iconLoader: any AppIconLoading,
         isSelected: Bool = false,
-        isDropTarget: Bool = false
+        dropIndicator: AppTileDropIndicator = .none
     ) {
         self.app = app
         self.iconLoader = iconLoader
         self.isSelected = isSelected
-        self.isDropTarget = isDropTarget
+        self.dropIndicator = dropIndicator
     }
 
     public var body: some View {
@@ -37,6 +43,7 @@ public struct AppTileView: View {
         .frame(width: LauncherDesign.tileWidth, height: LauncherDesign.tileHeight)
         .background(tileBackground)
         .overlay(tileBorder)
+        .overlay(dropIndicatorView)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .onHover { isHovered = $0 }
@@ -44,9 +51,6 @@ public struct AppTileView: View {
     }
 
     private var tileBackground: Color {
-        if isDropTarget {
-            return Color.accentColor.opacity(0.2)
-        }
         if isSelected {
             return Color.accentColor.opacity(isHovered ? 0.18 : 0.12)
         }
@@ -57,16 +61,35 @@ public struct AppTileView: View {
     private var tileBorder: some View {
         let shape = RoundedRectangle(cornerRadius: 8, style: .continuous)
 
-        if isDropTarget {
-            shape.strokeBorder(
-                Color.accentColor.opacity(0.9),
-                style: StrokeStyle(lineWidth: 2, dash: [5, 3])
-            )
-        } else {
-            shape.strokeBorder(
-                isSelected ? Color.accentColor.opacity(0.78) : Color.clear,
-                lineWidth: 2
-            )
+        shape.strokeBorder(
+            isSelected ? Color.accentColor.opacity(0.78) : Color.clear,
+            lineWidth: 2
+        )
+    }
+
+    @ViewBuilder
+    private var dropIndicatorView: some View {
+        switch dropIndicator {
+        case .none:
+            EmptyView()
+        case .before:
+            HStack {
+                insertionMarker
+                Spacer()
+            }
+        case .after:
+            HStack {
+                Spacer()
+                insertionMarker
+            }
         }
+    }
+
+    private var insertionMarker: some View {
+        Capsule()
+            .fill(Color.accentColor)
+            .frame(width: 4, height: 92)
+            .shadow(color: Color.accentColor.opacity(0.45), radius: 4)
+            .padding(.horizontal, -6)
     }
 }

@@ -54,7 +54,7 @@ public struct AppGridView: View {
                                     app: app,
                                     iconLoader: iconLoader,
                                     isSelected: app.id == selectedAppID,
-                                    isDropTarget: app.id == dropTargetAppID
+                                    dropIndicator: dropIndicator(for: app)
                                 )
                             }
                             .buttonStyle(.plain)
@@ -137,6 +137,19 @@ public struct AppGridView: View {
         if let dropTargetAppID, appIDs.contains(dropTargetAppID) == false {
             self.dropTargetAppID = nil
         }
+    }
+
+    private func dropIndicator(for app: AppItem) -> AppTileDropIndicator {
+        guard dropTargetAppID == app.id,
+              let draggedAppID,
+              draggedAppID != app.id,
+              let draggedIndex = apps.firstIndex(where: { $0.id == draggedAppID }),
+              let targetIndex = apps.firstIndex(where: { $0.id == app.id })
+        else {
+            return .none
+        }
+
+        return draggedIndex < targetIndex ? .after : .before
     }
 }
 

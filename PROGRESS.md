@@ -308,6 +308,17 @@ Reason:
 - Re-ran `scripts/build-installer.sh` after drag operation fix: exits 0.
 - Latest package SHA-256 after drag operation fix: `d860f365ef2ad341d72104375f7100b3779346ab294e52545dbb3618c01ce084`.
 - Re-ran `swift run MacLauncher` smoke after drag operation fix: app process stayed alive for 5 seconds, then stopped cleanly.
+- Replaced the dashed drop-target rectangle with a slim insertion marker before or after the target tile.
+- Drop indicator direction now matches the persisted reorder result:
+  - dragging forward shows the marker after the target tile
+  - dragging backward shows the marker before the target tile
+- Updated `PLAN.md` with the insertion-marker behavior.
+- Re-ran `git diff --check` after insertion-marker fix: exits 0.
+- Re-ran `swift build` after insertion-marker fix: exits 0.
+- Re-ran `swift test` after insertion-marker fix: exits 0.
+- Re-ran `scripts/build-installer.sh` after insertion-marker fix: exits 0.
+- Latest package SHA-256 after insertion-marker fix: `9888c847768ba3e1ec9e6d86ae74f2ba6b5e12ce3457fcb099011a869fb1110a`.
+- Re-ran `swift run MacLauncher` smoke after insertion-marker fix: app process stayed alive for 5 seconds, then stopped cleanly.
 
 ## Next steps
 

@@ -371,7 +371,7 @@ Keep drag/drop logic in the grid feature layer, not in the domain model.
 - Dropping a tile onto another visible tile reorders the grid.
 - Drag/drop reorder persists through the existing layout store.
 - Invalid drops, including dropping a tile on itself or using unknown app IDs, are ignored without saving.
-- Drop targets show a dashed highlight while dragging.
+- Drag targets show an insertion marker before or after the target tile instead of outlining the tile.
 - Drag-over uses a move drop proposal, so the UI does not show the `+` copy/group badge.
 - Unit tests cover persisted drag/drop order, reload survival, and invalid-drop safety.
 
