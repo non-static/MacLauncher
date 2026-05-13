@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 public struct AppGridView: View {
     private let apps: [AppItem]
@@ -7,7 +8,11 @@ public struct AppGridView: View {
     private let onLaunch: (AppItem) -> Void
     private let onHide: (AppItem) -> Void
     private let onMoveInLayout: (AppItem, Int) -> Void
+    private let onReorder: (AppItem.ID, AppItem.ID) -> Bool
     private let onColumnCountChange: (Int) -> Void
+
+    @State private var draggedAppID: AppItem.ID?
+    @State private var dropTargetAppID: AppItem.ID?
 
     private let columns = [
         GridItem(.adaptive(minimum: LauncherDesign.tileMinWidth), spacing: Self.gridSpacing)
@@ -23,6 +28,7 @@ public struct AppGridView: View {
         onLaunch: @escaping (AppItem) -> Void,
         onHide: @escaping (AppItem) -> Void = { _ in },
         onMoveInLayout: @escaping (AppItem, Int) -> Void = { _, _ in },
+        onReorder: @escaping (AppItem.ID, AppItem.ID) -> Bool = { _, _ in false },
         onColumnCountChange: @escaping (Int) -> Void = { _ in }
     ) {
         self.apps = apps
@@ -31,6 +37,7 @@ public struct AppGridView: View {
         self.onLaunch = onLaunch
         self.onHide = onHide
         self.onMoveInLayout = onMoveInLayout
+        self.onReorder = onReorder
         self.onColumnCountChange = onColumnCountChange
     }
 
@@ -46,11 +53,25 @@ public struct AppGridView: View {
                                 AppTileView(
                                     app: app,
                                     iconLoader: iconLoader,
-                                    isSelected: app.id == selectedAppID
+                                    isSelected: app.id == selectedAppID,
+                                    isDropTarget: app.id == dropTargetAppID
                                 )
                             }
                             .buttonStyle(.plain)
                             .id(app.id)
+                            .onDrag {
+                                draggedAppID = app.id
+                                return NSItemProvider(object: app.id as NSString)
+                            }
+                            .onDrop(
+                                of: [UTType.plainText],
+                                delegate: AppTileDropDelegate(
+                                    app: app,
+                                    draggedAppID: $draggedAppID,
+                                    dropTargetAppID: $dropTargetAppID,
+                                    onReorder: onReorder
+                                )
+                            )
                             .contextMenu {
                                 Button("Move Earlier") {
                                     onMoveInLayout(app, -1)
@@ -81,6 +102,7 @@ public struct AppGridView: View {
                     scrollToSelection(with: proxy)
                 }
                 .onChange(of: apps.map(\.id)) { _, _ in
+                    reconcileDragState()
                     scrollToSelection(with: proxy)
                 }
             }
@@ -105,5 +127,64 @@ public struct AppGridView: View {
         withAnimation(.easeInOut(duration: 0.12)) {
             proxy.scrollTo(selectedAppID, anchor: .center)
         }
+    }
+
+    private func reconcileDragState() {
+        let appIDs = Set(apps.map(\.id))
+        if let draggedAppID, appIDs.contains(draggedAppID) == false {
+            self.draggedAppID = nil
+        }
+        if let dropTargetAppID, appIDs.contains(dropTargetAppID) == false {
+            self.dropTargetAppID = nil
+        }
+    }
+}
+
+private struct AppTileDropDelegate: DropDelegate {
+    let app: AppItem
+
+    @Binding var draggedAppID: AppItem.ID?
+    @Binding var dropTargetAppID: AppItem.ID?
+
+    let onReorder: (AppItem.ID, AppItem.ID) -> Bool
+
+    func validateDrop(info: DropInfo) -> Bool {
+        guard let draggedAppID else {
+            return false
+        }
+        return draggedAppID != app.id
+    }
+
+    func dropEntered(info: DropInfo) {
+        guard validateDrop(info: info) else {
+            return
+        }
+
+        withAnimation(.easeInOut(duration: 0.1)) {
+            dropTargetAppID = app.id
+        }
+    }
+
+    func dropExited(info: DropInfo) {
+        guard dropTargetAppID == app.id else {
+            return
+        }
+
+        withAnimation(.easeInOut(duration: 0.1)) {
+            dropTargetAppID = nil
+        }
+    }
+
+    func performDrop(info: DropInfo) -> Bool {
+        defer {
+            draggedAppID = nil
+            dropTargetAppID = nil
+        }
+
+        guard let draggedAppID, draggedAppID != app.id else {
+            return false
+        }
+
+        return onReorder(draggedAppID, app.id)
     }
 }

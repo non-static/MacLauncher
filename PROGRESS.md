@@ -6,16 +6,16 @@ Source plan: `PLAN.md`
 
 Branch:
 
-- `codex/phase3-layout-persistence`
+- `codex/phase4-drag-drop-reorder`
 
 Scope chosen for this pass:
 
-- Phase 3: layout persistence
+- Phase 4: drag-and-drop reordering
 
 Reason:
 
-- User requested executing Phase 3 from `PLAN.md`.
-- Phase 3 adds persisted custom order, hidden apps, startup restore, and reset layout.
+- User requested executing Phase 4 from `PLAN.md`.
+- Phase 4 adds direct tile drag/drop reordering on top of Phase 3 layout persistence.
 
 ## Completed
 
@@ -279,8 +279,28 @@ Reason:
 - Updated local `/Applications/MacLauncher.app` from `.build/installer/MacLauncher.app`.
 - Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
 - Ran installed app executable smoke from `/Applications/MacLauncher.app/Contents/MacOS/MacLauncher`: app process stayed alive for 5 seconds, then stopped cleanly.
+- Added grid-local drag/drop support with `onDrag` and `DropDelegate`.
+- Dragging a tile stores the dragged app ID in grid state.
+- Dropping onto another visible app calls the view model reorder API and persists the new order.
+- Added dashed drop-target highlighting to app tiles.
+- Invalid drops are ignored without saving layout:
+  - same source/target app
+  - unknown dragged app ID
+  - missing local drag state
+- Added `HomeViewModel.reorderAppInLayout(draggedAppID:targetAppID:)`.
+- Added Phase 4 unit tests for:
+  - persisted dropped order
+  - order surviving reload through `LayoutStore`
+  - invalid drop safety
+- Updated `PLAN.md` with Phase 4 implementation details.
+- Ran `git diff --check`: exits 0.
+- Ran `swift build`: exits 0.
+- Ran `swift test`: exits 0.
+- Ran `scripts/build-installer.sh`: exits 0.
+- Latest package SHA-256 after Phase 4 drag/drop: `618b2add15fb46f68b0506fda1ce550f1f2cd50e135e551866c6ba160d1f9fa5`.
+- Ran `swift run MacLauncher` smoke: app process stayed alive for 5 seconds, then stopped cleanly.
 
 ## Next steps
 
-1. Phase 3 PR is ready from `codex/phase3-layout-persistence`.
-2. After merge, return local checkout to `main` and pull latest.
+1. Open a Phase 4 PR if requested.
+2. After merge, start Phase 5 custom groups / folders.

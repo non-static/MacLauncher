@@ -366,6 +366,14 @@ The launcher starts to feel like Launchpad.
 ### Design note
 Keep drag/drop logic in the grid feature layer, not in the domain model.
 
+### Implemented in this Phase 4 pass
+- App tiles can be dragged inside the grid.
+- Dropping a tile onto another visible tile reorders the grid.
+- Drag/drop reorder persists through the existing layout store.
+- Invalid drops, including dropping a tile on itself or using unknown app IDs, are ignored without saving.
+- Drop targets show a dashed highlight while dragging.
+- Unit tests cover persisted drag/drop order, reload survival, and invalid-drop safety.
+
 ---
 
 ## Phase 5 — Custom groups / folders

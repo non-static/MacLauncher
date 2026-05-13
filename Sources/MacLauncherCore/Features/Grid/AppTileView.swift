@@ -4,17 +4,20 @@ public struct AppTileView: View {
     private let app: AppItem
     private let iconLoader: any AppIconLoading
     private let isSelected: Bool
+    private let isDropTarget: Bool
 
     @State private var isHovered = false
 
     public init(
         app: AppItem,
         iconLoader: any AppIconLoading,
-        isSelected: Bool = false
+        isSelected: Bool = false,
+        isDropTarget: Bool = false
     ) {
         self.app = app
         self.iconLoader = iconLoader
         self.isSelected = isSelected
+        self.isDropTarget = isDropTarget
     }
 
     public var body: some View {
@@ -33,13 +36,7 @@ public struct AppTileView: View {
         }
         .frame(width: LauncherDesign.tileWidth, height: LauncherDesign.tileHeight)
         .background(tileBackground)
-        .overlay(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .strokeBorder(
-                    isSelected ? Color.accentColor.opacity(0.78) : Color.clear,
-                    lineWidth: 2
-                )
-        )
+        .overlay(tileBorder)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .onHover { isHovered = $0 }
@@ -47,9 +44,29 @@ public struct AppTileView: View {
     }
 
     private var tileBackground: Color {
+        if isDropTarget {
+            return Color.accentColor.opacity(0.2)
+        }
         if isSelected {
             return Color.accentColor.opacity(isHovered ? 0.18 : 0.12)
         }
         return isHovered ? Color.primary.opacity(0.08) : Color.clear
+    }
+
+    @ViewBuilder
+    private var tileBorder: some View {
+        let shape = RoundedRectangle(cornerRadius: 8, style: .continuous)
+
+        if isDropTarget {
+            shape.strokeBorder(
+                Color.accentColor.opacity(0.9),
+                style: StrokeStyle(lineWidth: 2, dash: [5, 3])
+            )
+        } else {
+            shape.strokeBorder(
+                isSelected ? Color.accentColor.opacity(0.78) : Color.clear,
+                lineWidth: 2
+            )
+        }
     }
 }

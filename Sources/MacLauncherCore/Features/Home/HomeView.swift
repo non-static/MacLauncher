@@ -250,6 +250,12 @@ public struct HomeView: View {
                 onMoveInLayout: { app, offset in
                     viewModel.moveAppInLayout(app, by: offset)
                 },
+                onReorder: { draggedAppID, targetAppID in
+                    viewModel.reorderAppInLayout(
+                        draggedAppID: draggedAppID,
+                        targetAppID: targetAppID
+                    )
+                },
                 onColumnCountChange: { columnCount in
                     navigationColumnCount = columnCount
                 }
