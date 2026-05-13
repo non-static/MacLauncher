@@ -6,7 +6,7 @@ Source plan: `PLAN.md`
 
 Branch:
 
-- `codex/app-logo`
+- `codex/esc-quit`
 
 Scope chosen for this pass:
 
@@ -14,6 +14,7 @@ Scope chosen for this pass:
 - Phase 1: smallest working launcher
 - Packaging slice from Phase 10: local installer package
 - Icon slice from Phase 10: modern app logo and `.icns`
+- Keyboard behavior slice: Escape quits the app
 
 Reason:
 
@@ -21,6 +22,7 @@ Reason:
 - Plan says to build one working vertical slice at a time.
 - User requested installer package before continuing product features.
 - User requested a modern app logo with no strict visual constraints.
+- User requested Escape key exit the app instead of just closing a window.
 
 ## Completed
 
@@ -59,6 +61,10 @@ Reason:
 - Updated installer packaging to copy `AppIcon.icns` and set `CFBundleIconFile`.
 - Updated `LauncherAppDelegate` to set `NSApp.applicationIconImage` from the bundled icon at runtime for `swift run`.
 - Updated `PLAN.md` with the current icon slice.
+- Added an app-local Escape key monitor in `LauncherAppDelegate`.
+- Escape now calls `NSApp.terminate(nil)` and consumes the key event.
+- Added cleanup for the Escape key monitor during app termination.
+- Updated `PLAN.md` with the current keyboard behavior slice.
 
 ## Verification
 
@@ -107,6 +113,14 @@ Reason:
 - Re-ran `swift run MacLauncher` smoke for 3 seconds: exits 0 after test kill.
 - Re-ran `scripts/build-installer.sh`: exits 0.
 - Latest package SHA-256 after runtime icon fix: `243cbb36a66848b4eaafbd48f1360a4d16316a6adc2ea70afd325204acb61a06`.
+- Re-ran `swift build`: exits 0.
+- Re-ran `swift test`: exits 0.
+- Re-ran `scripts/build-installer.sh`: exits 0.
+- Latest package SHA-256 after Escape quit change: `dafdbdb9e8e8fab70bc432cd6267bddca3934ae7f47c4ad6b4c90d13e916814a`.
+- Updated local `/Applications/MacLauncher.app` from the rebuilt app bundle.
+- Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
+- Launched installed app from `/Applications/MacLauncher.app`; process started.
+- Automated Escape key verification was blocked by macOS Accessibility: `osascript is not allowed to send keystrokes`.
 
 ## Next steps
 

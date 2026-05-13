@@ -2,13 +2,22 @@ import AppKit
 
 @MainActor
 final class LauncherAppDelegate: NSObject, NSApplicationDelegate {
+    private var escapeKeyMonitor: Any?
+
     func applicationWillFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
         installRuntimeAppIcon()
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        installEscapeKeyMonitor()
         focusWindowsAfterLaunch()
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        if let escapeKeyMonitor {
+            NSEvent.removeMonitor(escapeKeyMonitor)
+        }
     }
 
     private func focusWindowsAfterLaunch() {
@@ -38,5 +47,20 @@ final class LauncherAppDelegate: NSObject, NSApplicationDelegate {
         }
 
         NSApp.applicationIconImage = icon
+    }
+
+    private func installEscapeKeyMonitor() {
+        guard escapeKeyMonitor == nil else {
+            return
+        }
+
+        escapeKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            guard event.keyCode == 53 else {
+                return event
+            }
+
+            NSApp.terminate(nil)
+            return nil
+        }
     }
 }
