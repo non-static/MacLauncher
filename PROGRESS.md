@@ -6,7 +6,7 @@ Source plan: `PLAN.md`
 
 Branch:
 
-- `codex/background-transparency`
+- `codex/quit-after-launch`
 
 Scope chosen for this pass:
 
@@ -16,6 +16,7 @@ Scope chosen for this pass:
 - Icon slice from Phase 10: modern app logo and `.icns`
 - Keyboard behavior slice: Escape quits the app
 - Settings slice from Phase 9: configurable background transparency
+- Launch behavior slice: quit after launching a selected app
 
 Reason:
 
@@ -25,6 +26,7 @@ Reason:
 - User requested a modern app logo with no strict visual constraints.
 - User requested Escape key exit the app instead of just closing a window.
 - User requested configurable `x%` background transparency with default `30`.
+- User requested MacLauncher exit after launching an app from the list.
 
 ## Completed
 
@@ -80,6 +82,11 @@ Reason:
 - Added a Settings window identifier through `SettingsWindowConfigurator`.
 - Updated Escape handling so an open Settings window closes first; next Escape quits the app.
 - Updated `PLAN.md` with the Settings-first Escape behavior.
+- Added a launch-success callback to `HomeViewModel`.
+- Wired MacLauncher app layer to terminate after successful app launch.
+- Kept failed launches open so the existing alert can show the error.
+- Added launch success/failure unit tests for callback behavior.
+- Updated `PLAN.md` with the current launch behavior slice.
 
 ## Verification
 
@@ -156,6 +163,16 @@ Reason:
 - Re-ran `swift test` after Settings-first Escape behavior: exits 0.
 - Re-ran `scripts/build-installer.sh`: exits 0.
 - Latest package SHA-256 after Settings-first Escape behavior: `003c0460059d840c6e58be93c3b89c4475cd26e70897dc9ec07fece92551e987`.
+- Updated local `/Applications/MacLauncher.app` from the rebuilt app bundle.
+- Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
+- Launched installed app from `/Applications/MacLauncher.app`; process started.
+- Re-ran `swift run MacLauncher` smoke for 3 seconds: exits 0 after test kill.
+- First build after launch-success callback failed because `HomeView` passed a `Task`-returning launch function where `AppGridView` expects a `Void` action.
+- Fixed by wrapping `viewModel.launch(app)` in a closure.
+- Re-ran `swift build`: exits 0.
+- Re-ran `swift test`: exits 0, including launch success/failure callback tests.
+- Re-ran `scripts/build-installer.sh`: exits 0.
+- Latest package SHA-256 after quit-after-launch behavior: `203430ce41bd6e94dcd18545b2a2dcb50c0dc67cf36604cf26bced010573dbca`.
 - Updated local `/Applications/MacLauncher.app` from the rebuilt app bundle.
 - Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
 - Launched installed app from `/Applications/MacLauncher.app`; process started.

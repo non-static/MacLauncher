@@ -9,13 +9,16 @@ public final class HomeViewModel: ObservableObject {
 
     private let catalogService: any AppCatalogService
     private let launchService: any AppLaunchService
+    private let onSuccessfulLaunch: @MainActor () -> Void
 
     public init(
         catalogService: any AppCatalogService,
-        launchService: any AppLaunchService
+        launchService: any AppLaunchService,
+        onSuccessfulLaunch: @escaping @MainActor () -> Void = {}
     ) {
         self.catalogService = catalogService
         self.launchService = launchService
+        self.onSuccessfulLaunch = onSuccessfulLaunch
     }
 
     public func refresh() {
@@ -30,11 +33,13 @@ public final class HomeViewModel: ObservableObject {
         }
     }
 
-    public func launch(_ app: AppItem) {
+    @discardableResult
+    public func launch(_ app: AppItem) -> Task<Void, Never> {
         Task {
             do {
                 try await launchService.launch(app)
                 errorMessage = nil
+                onSuccessfulLaunch()
             } catch {
                 errorMessage = "Could not launch \(app.name): \(error.localizedDescription)"
             }

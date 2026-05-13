@@ -243,6 +243,19 @@ This is the first true vertical slice. Keep it brutally small.
 - Fallback to app path if bundle identifier is missing.
 - Wrap icon loading so you can later add caching without touching the UI.
 
+### Current launch behavior slice
+Close the launcher after it successfully launches a selected app:
+
+1. Add a launch-success callback to the home view model.
+2. Call the callback only after `AppLaunchService.launch` succeeds.
+3. Terminate MacLauncher from the app layer via the callback.
+
+### Acceptance criteria
+- Clicking an app still launches it.
+- MacLauncher exits after a successful launch.
+- MacLauncher stays open and shows an error if launch fails.
+- Unit tests cover success and failure callback behavior.
+
 ---
 
 ## Phase 2 — Searchable launcher

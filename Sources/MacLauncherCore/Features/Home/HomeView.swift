@@ -113,7 +113,9 @@ public struct HomeView: View {
             AppGridView(
                 apps: viewModel.apps,
                 iconLoader: iconLoader,
-                onLaunch: viewModel.launch
+                onLaunch: { app in
+                    viewModel.launch(app)
+                }
             )
         }
     }
