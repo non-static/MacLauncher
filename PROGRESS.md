@@ -6,16 +6,16 @@ Source plan: `PLAN.md`
 
 Branch:
 
-- `codex/phase2-search`
+- `codex/phase2-esc-clears-search`
 
 Scope chosen for this pass:
 
-- Phase 2: searchable launcher
+- Phase 2 extension: Escape clears search input
 
 Reason:
 
-- User requested executing Phase 2 from `PLAN.md`.
-- Phase 2 is the next planned vertical slice after the merged Phase 1 work.
+- User requested that pressing Escape after typing search text clear the input and restore the loaded launcher state instead of exiting the app.
+- User requested this behavior be added to Phase 2 in `PLAN.md`.
 
 ## Completed
 
@@ -210,8 +210,23 @@ Reason:
 - Updated local `/Applications/MacLauncher.app` from `.build/installer/MacLauncher.app`.
 - Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
 - Ran installed app executable smoke from `/Applications/MacLauncher.app/Contents/MacOS/MacLauncher`: exits 0 after launch window cycle.
+- Added `HomeViewModel.resetSearchToLoadedState()`.
+- Escape with non-empty search now clears search, restores the full app grid, selects the first visible app, and keeps MacLauncher open.
+- Existing Escape priority remains:
+  - close visible Settings window first
+  - clear active search second
+  - quit MacLauncher only when there is no Settings window and no search text
+- Wired `HomeView` to register a main-window Escape handler with `LauncherAppDelegate`.
+- Added unit tests for Escape-reset view-model behavior.
+- Updated `PLAN.md` so this Escape behavior is part of Phase 2.
+- Ran `git diff --check`: exits 0.
+- Ran `swift build`: exits 0.
+- Ran `swift test`: exits 0.
+- Ran `scripts/build-installer.sh`: exits 0.
+- Latest package SHA-256 after Escape search clear: `005af29e32b39142faa3b561693b850c20697dd1a8c6691def2de33e58004b71`.
+- Ran `swift run MacLauncher` smoke: app process stayed alive for 5 seconds, then stopped cleanly.
 
 ## Next steps
 
-1. Phase 2 PR is open from `codex/phase2-search`.
-2. After Phase 2 merges, start Phase 3 layout persistence.
+1. Verify the Escape-clear-search branch.
+2. Commit and open a PR if requested.

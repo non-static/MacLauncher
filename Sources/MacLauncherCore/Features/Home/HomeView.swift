@@ -6,6 +6,8 @@ public struct HomeView: View {
     private let iconLoader: any AppIconLoading
     private let backgroundTransparencyPercent: Double
     private let onOpenSettings: () -> Void
+    private let onRegisterEscapeHandler: (@escaping @MainActor () -> Bool) -> Void
+    private let onUnregisterEscapeHandler: () -> Void
     private let navigationColumnCount = 5
 
     @FocusState private var isSearchFocused: Bool
@@ -14,12 +16,16 @@ public struct HomeView: View {
         viewModel: HomeViewModel,
         iconLoader: any AppIconLoading,
         backgroundTransparencyPercent: Double,
-        onOpenSettings: @escaping () -> Void
+        onOpenSettings: @escaping () -> Void,
+        onRegisterEscapeHandler: @escaping (@escaping @MainActor () -> Bool) -> Void = { _ in },
+        onUnregisterEscapeHandler: @escaping () -> Void = {}
     ) {
         self.viewModel = viewModel
         self.iconLoader = iconLoader
         self.backgroundTransparencyPercent = backgroundTransparencyPercent
         self.onOpenSettings = onOpenSettings
+        self.onRegisterEscapeHandler = onRegisterEscapeHandler
+        self.onUnregisterEscapeHandler = onUnregisterEscapeHandler
     }
 
     public var body: some View {
@@ -44,6 +50,16 @@ public struct HomeView: View {
             DispatchQueue.main.async {
                 isSearchFocused = true
             }
+            onRegisterEscapeHandler {
+                let didReset = viewModel.resetSearchToLoadedState()
+                if didReset {
+                    isSearchFocused = true
+                }
+                return didReset
+            }
+        }
+        .onDisappear {
+            onUnregisterEscapeHandler()
         }
         .background(
             LauncherKeyboardMonitor(

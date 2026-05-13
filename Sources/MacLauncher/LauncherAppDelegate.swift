@@ -2,6 +2,8 @@ import AppKit
 
 @MainActor
 final class LauncherAppDelegate: NSObject, NSApplicationDelegate {
+    var launcherEscapeHandler: (@MainActor () -> Bool)?
+
     private var escapeKeyMonitor: Any?
 
     func applicationWillFinishLaunching(_ notification: Notification) {
@@ -60,6 +62,10 @@ final class LauncherAppDelegate: NSObject, NSApplicationDelegate {
             }
 
             if Self.closeVisibleSettingsWindow() {
+                return nil
+            }
+
+            if self.launcherEscapeHandler?() == true {
                 return nil
             }
 

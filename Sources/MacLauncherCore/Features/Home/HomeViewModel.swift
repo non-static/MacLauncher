@@ -67,6 +67,17 @@ public final class HomeViewModel: ObservableObject {
     }
 
     @discardableResult
+    public func resetSearchToLoadedState() -> Bool {
+        guard searchQuery.isEmpty == false else {
+            return false
+        }
+
+        searchQuery = ""
+        selectedAppID = apps.first?.id
+        return true
+    }
+
+    @discardableResult
     public func launchSelected() -> Task<Void, Never>? {
         guard let selectedApp else {
             return nil
