@@ -302,6 +302,8 @@ Start with an in-memory search filter. Do not build a complex search index yet.
 - Search is focused when the launcher window appears.
 - The first visible app is highlighted automatically.
 - Arrow keys move the highlighted app within the visible grid.
+- Up and Down use the grid's current rendered column count, so selection moves to the visual tile above or below.
+- The grid scrolls automatically to keep the highlighted app in view.
 - Enter launches the highlighted app.
 - Escape clears a non-empty search and restores the full app grid instead of exiting the app.
 - Empty search results show a dedicated no-match state.
@@ -330,6 +332,18 @@ The app remembers basic organization state.
 
 ### Design note
 Use file versioning in the JSON so future migrations are possible.
+
+### Implemented in this Phase 3 pass
+- `JSONLayoutStore` is wired into the live app through `AppContainer`.
+- Layout loads from Application Support before app list presentation.
+- Layout saves ordered app IDs, hidden app IDs, and schema version `1`.
+- Corrupt or unsupported-version layout files fall back to the default scanned app list.
+- The Layout menu supports moving the selected app earlier or later.
+- Tile context menus support moving or hiding individual apps.
+- Hiding apps persists and removes them from the grid.
+- Reset Layout restores scanned order and clears hidden apps.
+- Unit tests cover persisted order, hidden apps, custom order saving, reset, load failure fallback, and unsupported layout versions.
+- Phase 3 build has been installed locally to `/Applications/MacLauncher.app` for manual use.
 
 ---
 

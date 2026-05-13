@@ -8,9 +8,9 @@ public struct HomeView: View {
     private let onOpenSettings: () -> Void
     private let onRegisterEscapeHandler: (@escaping @MainActor () -> Bool) -> Void
     private let onUnregisterEscapeHandler: () -> Void
-    private let navigationColumnCount = 5
 
     @FocusState private var isSearchFocused: Bool
+    @State private var navigationColumnCount = 1
 
     public init(
         viewModel: HomeViewModel,
@@ -63,6 +63,7 @@ public struct HomeView: View {
         }
         .background(
             LauncherKeyboardMonitor(
+                rowStride: navigationColumnCount,
                 onMove: { offset in
                     viewModel.moveSelection(by: offset)
                     isSearchFocused = true
@@ -111,15 +112,18 @@ public struct HomeView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("MacLauncher")
                     .font(.title2.weight(.semibold))
-                Text("\(viewModel.apps.count) of \(viewModel.totalAppCount) apps")
+                Text(appCountSummary)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .lineLimit(2)
             }
-            .frame(width: 150, alignment: .leading)
+            .frame(width: 180, alignment: .leading)
 
             searchField
 
             Spacer(minLength: 8)
+
+            layoutMenu
 
             Button {
                 onOpenSettings()
@@ -136,6 +140,43 @@ public struct HomeView: View {
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 16)
+    }
+
+    private var appCountSummary: String {
+        if viewModel.hiddenAppCount > 0 {
+            return "\(viewModel.apps.count) of \(viewModel.totalAppCount) apps, \(viewModel.hiddenAppCount) hidden"
+        }
+        return "\(viewModel.apps.count) of \(viewModel.totalAppCount) apps"
+    }
+
+    private var layoutMenu: some View {
+        Menu {
+            Button("Move Earlier") {
+                viewModel.moveSelectedAppInLayout(by: -1)
+            }
+            .disabled(viewModel.selectedApp == nil)
+
+            Button("Move Later") {
+                viewModel.moveSelectedAppInLayout(by: 1)
+            }
+            .disabled(viewModel.selectedApp == nil)
+
+            Divider()
+
+            Button("Hide Selected App") {
+                viewModel.hideSelectedApp()
+            }
+            .disabled(viewModel.selectedApp == nil)
+
+            Divider()
+
+            Button("Reset Layout", role: .destructive) {
+                viewModel.resetLayout()
+            }
+        } label: {
+            Label("Layout", systemImage: "square.grid.3x3")
+        }
+        .help("Layout")
     }
 
     private var searchField: some View {
@@ -202,6 +243,15 @@ public struct HomeView: View {
                 selectedAppID: viewModel.selectedAppID,
                 onLaunch: { app in
                     viewModel.launch(app)
+                },
+                onHide: { app in
+                    viewModel.hideApp(app)
+                },
+                onMoveInLayout: { app, offset in
+                    viewModel.moveAppInLayout(app, by: offset)
+                },
+                onColumnCountChange: { columnCount in
+                    navigationColumnCount = columnCount
                 }
             )
         }
@@ -221,6 +271,7 @@ public struct HomeView: View {
 }
 
 private struct LauncherKeyboardMonitor: NSViewRepresentable {
+    let rowStride: Int
     let onMove: (Int) -> Void
     let onLaunchSelected: () -> Void
 
@@ -232,6 +283,7 @@ private struct LauncherKeyboardMonitor: NSViewRepresentable {
         let view = KeyboardMonitorView()
         view.coordinator = context.coordinator
         context.coordinator.windowNumber = view.window?.windowNumber
+        context.coordinator.rowStride = max(1, rowStride)
         context.coordinator.onMove = onMove
         context.coordinator.onLaunchSelected = onLaunchSelected
         context.coordinator.installMonitor()
@@ -243,6 +295,7 @@ private struct LauncherKeyboardMonitor: NSViewRepresentable {
             view.coordinator = context.coordinator
             context.coordinator.windowNumber = view.window?.windowNumber
         }
+        context.coordinator.rowStride = max(1, rowStride)
         context.coordinator.onMove = onMove
         context.coordinator.onLaunchSelected = onLaunchSelected
     }
@@ -253,11 +306,11 @@ private struct LauncherKeyboardMonitor: NSViewRepresentable {
 
     final class Coordinator {
         var windowNumber: Int?
+        var rowStride = 1
         var onMove: ((Int) -> Void)?
         var onLaunchSelected: (() -> Void)?
 
         private var monitor: Any?
-        private let navigationColumnCount = 5
 
         func installMonitor() {
             guard monitor == nil else {
@@ -297,10 +350,10 @@ private struct LauncherKeyboardMonitor: NSViewRepresentable {
                 onMove?(1)
                 return nil
             case 125:
-                onMove?(navigationColumnCount)
+                onMove?(rowStride)
                 return nil
             case 126:
-                onMove?(-navigationColumnCount)
+                onMove?(-rowStride)
                 return nil
             default:
                 return event

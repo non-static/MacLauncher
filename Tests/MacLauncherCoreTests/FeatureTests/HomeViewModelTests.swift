@@ -34,6 +34,147 @@ struct HomeViewModelTests {
     }
 
     @Test
+    func refreshAppliesPersistedOrderAndHiddenApps() {
+        let apps = [
+            makeApp(id: "com.example.one", name: "One"),
+            makeApp(id: "com.example.two", name: "Two"),
+            makeApp(id: "com.example.three", name: "Three")
+        ]
+        let store = StubLayoutStore(
+            layoutToLoad: LauncherLayout(
+                orderedAppIDs: [apps[1].id, apps[0].id, apps[2].id],
+                hiddenAppIDs: [apps[2].id]
+            )
+        )
+        let viewModel = HomeViewModel(
+            catalogService: StubCatalogService(apps: apps),
+            launchService: StubLaunchService(),
+            layoutStore: store
+        )
+
+        viewModel.refresh()
+
+        #expect(viewModel.apps == [apps[1], apps[0]])
+        #expect(viewModel.totalAppCount == 2)
+        #expect(viewModel.hiddenAppCount == 1)
+        #expect(viewModel.selectedAppID == apps[1].id)
+    }
+
+    @Test
+    func hideAppPersistsLayoutAndRemovesAppFromGrid() {
+        let apps = [
+            makeApp(id: "com.example.one", name: "One"),
+            makeApp(id: "com.example.two", name: "Two"),
+            makeApp(id: "com.example.three", name: "Three")
+        ]
+        let store = StubLayoutStore()
+        let viewModel = HomeViewModel(
+            catalogService: StubCatalogService(apps: apps),
+            launchService: StubLaunchService(),
+            layoutStore: store
+        )
+
+        viewModel.refresh()
+        viewModel.hideApp(apps[1])
+
+        #expect(viewModel.apps == [apps[0], apps[2]])
+        #expect(viewModel.hiddenAppCount == 1)
+        #expect(store.savedLayouts.last?.hiddenAppIDs == [apps[1].id])
+    }
+
+    @Test
+    func moveAppInLayoutPersistsCustomOrder() {
+        let apps = [
+            makeApp(id: "com.example.one", name: "One"),
+            makeApp(id: "com.example.two", name: "Two"),
+            makeApp(id: "com.example.three", name: "Three")
+        ]
+        let store = StubLayoutStore()
+        let viewModel = HomeViewModel(
+            catalogService: StubCatalogService(apps: apps),
+            launchService: StubLaunchService(),
+            layoutStore: store
+        )
+
+        viewModel.refresh()
+        viewModel.moveAppInLayout(apps[2], by: -2)
+
+        #expect(viewModel.apps == [apps[2], apps[0], apps[1]])
+        #expect(viewModel.selectedAppID == apps[2].id)
+        #expect(store.savedLayouts.last?.orderedAppIDs == [
+            apps[2].id,
+            apps[0].id,
+            apps[1].id
+        ])
+    }
+
+    @Test
+    func resetLayoutRestoresScannedOrderAndHiddenApps() {
+        let apps = [
+            makeApp(id: "com.example.one", name: "One"),
+            makeApp(id: "com.example.two", name: "Two"),
+            makeApp(id: "com.example.three", name: "Three")
+        ]
+        let store = StubLayoutStore(
+            layoutToLoad: LauncherLayout(
+                orderedAppIDs: [apps[2].id, apps[1].id, apps[0].id],
+                hiddenAppIDs: [apps[1].id]
+            )
+        )
+        let viewModel = HomeViewModel(
+            catalogService: StubCatalogService(apps: apps),
+            launchService: StubLaunchService(),
+            layoutStore: store
+        )
+
+        viewModel.refresh()
+        viewModel.resetLayout()
+
+        #expect(viewModel.apps == apps)
+        #expect(viewModel.hiddenAppCount == 0)
+        #expect(store.savedLayouts.last == LauncherLayout(orderedAppIDs: apps.map(\.id)))
+    }
+
+    @Test
+    func loadLayoutFailureFallsBackToScannedApps() {
+        let app = makeApp()
+        let viewModel = HomeViewModel(
+            catalogService: StubCatalogService(apps: [app]),
+            launchService: StubLaunchService(),
+            layoutStore: StubLayoutStore(loadError: StubError.failed)
+        )
+
+        viewModel.refresh()
+
+        #expect(viewModel.apps == [app])
+        #expect(viewModel.errorMessage == nil)
+    }
+
+    @Test
+    func unsupportedLayoutVersionFallsBackToScannedApps() {
+        let apps = [
+            makeApp(id: "com.example.one", name: "One"),
+            makeApp(id: "com.example.two", name: "Two")
+        ]
+        let viewModel = HomeViewModel(
+            catalogService: StubCatalogService(apps: apps),
+            launchService: StubLaunchService(),
+            layoutStore: StubLayoutStore(
+                layoutToLoad: LauncherLayout(
+                    orderedAppIDs: [apps[1].id],
+                    hiddenAppIDs: [apps[0].id],
+                    version: 999
+                )
+            )
+        )
+
+        viewModel.refresh()
+
+        #expect(viewModel.apps == apps)
+        #expect(viewModel.hiddenAppCount == 0)
+    }
+
+    @Test
     func searchFiltersAppsByNameAndClearRestoresAllApps() {
         let apps = [
             makeApp(id: "com.example.safari", name: "Safari"),
@@ -234,6 +375,38 @@ private struct StubLaunchService: AppLaunchService {
         if let error {
             throw error
         }
+    }
+}
+
+private final class StubLayoutStore: LayoutStore {
+    var layoutToLoad: LauncherLayout?
+    var loadError: Error?
+    var saveError: Error?
+    private(set) var savedLayouts: [LauncherLayout] = []
+
+    init(
+        layoutToLoad: LauncherLayout? = nil,
+        loadError: Error? = nil,
+        saveError: Error? = nil
+    ) {
+        self.layoutToLoad = layoutToLoad
+        self.loadError = loadError
+        self.saveError = saveError
+    }
+
+    func loadLayout() throws -> LauncherLayout? {
+        if let loadError {
+            throw loadError
+        }
+        return layoutToLoad
+    }
+
+    func saveLayout(_ layout: LauncherLayout) throws {
+        if let saveError {
+            throw saveError
+        }
+        savedLayouts.append(layout)
+        layoutToLoad = layout
     }
 }
 

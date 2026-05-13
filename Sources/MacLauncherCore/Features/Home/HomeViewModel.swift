@@ -5,6 +5,7 @@ import Foundation
 public final class HomeViewModel: ObservableObject {
     @Published public private(set) var apps: [AppItem] = []
     @Published public private(set) var selectedAppID: AppItem.ID?
+    @Published public private(set) var hiddenAppCount = 0
     @Published public private(set) var isLoading = false
     @Published public var searchQuery = "" {
         didSet {
@@ -15,11 +16,15 @@ public final class HomeViewModel: ObservableObject {
 
     private let catalogService: any AppCatalogService
     private let launchService: any AppLaunchService
+    private let layoutStore: (any LayoutStore)?
     private let onSuccessfulLaunch: @MainActor () -> Void
-    private var allApps: [AppItem] = []
+    private var discoveredApps: [AppItem] = []
+    private var visibleApps: [AppItem] = []
+    private var layout = LauncherLayout()
+    private var didAttemptLayoutLoad = false
 
     public var totalAppCount: Int {
-        allApps.count
+        visibleApps.count
     }
 
     public var selectedApp: AppItem? {
@@ -32,10 +37,12 @@ public final class HomeViewModel: ObservableObject {
     public init(
         catalogService: any AppCatalogService,
         launchService: any AppLaunchService,
+        layoutStore: (any LayoutStore)? = nil,
         onSuccessfulLaunch: @escaping @MainActor () -> Void = {}
     ) {
         self.catalogService = catalogService
         self.launchService = launchService
+        self.layoutStore = layoutStore
         self.onSuccessfulLaunch = onSuccessfulLaunch
     }
 
@@ -44,8 +51,9 @@ public final class HomeViewModel: ObservableObject {
         defer { isLoading = false }
 
         do {
-            allApps = try catalogService.installedApps()
-            applySearch()
+            loadLayoutIfNeeded()
+            discoveredApps = try catalogService.installedApps()
+            applyLayoutAndSearch()
             errorMessage = nil
         } catch {
             errorMessage = "Could not refresh apps: \(error.localizedDescription)"
@@ -64,6 +72,53 @@ public final class HomeViewModel: ObservableObject {
             } ?? 0
         let nextIndex = min(max(currentIndex + offset, 0), apps.count - 1)
         selectedAppID = apps[nextIndex].id
+    }
+
+    public func hideSelectedApp() {
+        guard let selectedApp else {
+            return
+        }
+        hideApp(selectedApp)
+    }
+
+    public func hideApp(_ app: AppItem) {
+        layout.hiddenAppIDs.insert(app.id)
+        saveLayout()
+        applyLayoutAndSearch()
+    }
+
+    public func moveSelectedAppInLayout(by offset: Int) {
+        guard let selectedApp else {
+            return
+        }
+        moveAppInLayout(selectedApp, by: offset)
+    }
+
+    public func moveAppInLayout(_ app: AppItem, by offset: Int) {
+        guard let currentIndex = visibleApps.firstIndex(where: { $0.id == app.id }) else {
+            return
+        }
+
+        let targetIndex = min(max(currentIndex + offset, 0), visibleApps.count - 1)
+        guard targetIndex != currentIndex else {
+            return
+        }
+
+        var reorderedApps = visibleApps
+        let movedApp = reorderedApps.remove(at: currentIndex)
+        reorderedApps.insert(movedApp, at: targetIndex)
+        let hiddenOrderedIDs = layout.orderedAppIDs.filter { layout.hiddenAppIDs.contains($0) }
+
+        layout.orderedAppIDs = reorderedApps.map(\.id) + hiddenOrderedIDs
+        saveLayout()
+        applyLayoutAndSearch()
+        selectedAppID = app.id
+    }
+
+    public func resetLayout() {
+        layout = LauncherLayout(orderedAppIDs: discoveredApps.map(\.id))
+        saveLayout()
+        applyLayoutAndSearch()
     }
 
     @discardableResult
@@ -101,9 +156,9 @@ public final class HomeViewModel: ObservableObject {
     private func applySearch() {
         let trimmedQuery = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmedQuery.isEmpty {
-            apps = allApps
+            apps = visibleApps
         } else {
-            apps = allApps.filter { app in
+            apps = visibleApps.filter { app in
                 app.name.range(
                     of: trimmedQuery,
                     options: [.caseInsensitive, .diacriticInsensitive]
@@ -111,6 +166,56 @@ public final class HomeViewModel: ObservableObject {
             }
         }
         reconcileSelection()
+    }
+
+    private func loadLayoutIfNeeded() {
+        guard didAttemptLayoutLoad == false else {
+            return
+        }
+
+        didAttemptLayoutLoad = true
+
+        do {
+            let loadedLayout = try layoutStore?.loadLayout()
+            if let loadedLayout, loadedLayout.version == LauncherLayout.currentVersion {
+                layout = loadedLayout
+            } else {
+                layout = LauncherLayout()
+            }
+        } catch {
+            layout = LauncherLayout()
+        }
+    }
+
+    private func applyLayoutAndSearch() {
+        let appsByID = Dictionary(uniqueKeysWithValues: discoveredApps.map { ($0.id, $0) })
+        var seenOrderedIDs = Set<String>()
+        let orderedApps = layout.orderedAppIDs.compactMap { appID -> AppItem? in
+            guard seenOrderedIDs.insert(appID).inserted else {
+                return nil
+            }
+            return appsByID[appID]
+        }
+        let orderedIDs = Set(orderedApps.map(\.id))
+        let newApps = discoveredApps.filter { orderedIDs.contains($0.id) == false }
+        let allOrderedApps = orderedApps + newApps
+
+        if allOrderedApps.map(\.id) != layout.orderedAppIDs {
+            layout.orderedAppIDs = allOrderedApps.map(\.id)
+            saveLayout()
+        }
+
+        visibleApps = allOrderedApps.filter { layout.hiddenAppIDs.contains($0.id) == false }
+        hiddenAppCount = allOrderedApps.count - visibleApps.count
+        applySearch()
+    }
+
+    private func saveLayout() {
+        do {
+            try layoutStore?.saveLayout(layout)
+        } catch {
+            errorMessage = "Could not save layout: \(error.localizedDescription)"
+        }
     }
 
     private func reconcileSelection() {
