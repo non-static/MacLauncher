@@ -205,8 +205,13 @@ Reason:
 - Re-ran `scripts/build-installer.sh` after Phase 2 implementation: exits 0.
 - Latest package SHA-256 after Phase 2 search: `452f5382946635891bae6e8505a5b8bcf7b91d124bac854935fb210ea1b8b0c7`.
 - Re-ran `swift run MacLauncher` smoke after Phase 2 implementation: app process stayed alive for 5 seconds, then stopped cleanly.
+- Rebuilt the Phase 2 package before local install: exits 0.
+- Latest package SHA-256 before local install: `6ad9543a1d7aaa11936b2bd8c65255f6aca896aad75b3101eb64b5e362304d29`.
+- Updated local `/Applications/MacLauncher.app` from `.build/installer/MacLauncher.app`.
+- Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
+- Ran installed app executable smoke from `/Applications/MacLauncher.app/Contents/MacOS/MacLauncher`: exits 0 after launch window cycle.
 
 ## Next steps
 
-1. Open the Phase 2 PR from `codex/phase2-search`.
+1. Phase 2 PR is open from `codex/phase2-search`.
 2. After Phase 2 merges, start Phase 3 layout persistence.
