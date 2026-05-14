@@ -261,6 +261,10 @@ This is the first true vertical slice. Keep it brutally small.
 - Main UI includes Settings and Refresh controls.
 - Main UI hints that `Command-,` opens Settings.
 - Main UI shows the app version and a GitHub repository link in a corner.
+- Launcher window has no titlebar or close/minimize/zoom traffic-light buttons, and those controls are disabled if AppKit creates them.
+- Launcher window uses a fixed size and cannot be resized.
+- Launcher window has rounded corners.
+- Window menu sizing/arrangement commands are removed so minimize/maximize cannot be triggered from the menu.
 - App icon is present in both `swift run` and packaged app flows.
 - `scripts/build-installer.sh` builds a local `.pkg` installer.
 - README explains build, run, test, package, settings, and icon regeneration.
@@ -568,7 +572,7 @@ Start with in-memory filtering.
 Later add tokenization / ranking if the app catalog grows large.
 
 ### 5. Window strategy
-Start with a normal resizable window.
+Start with a fixed-size launcher window with no titlebar, no close/minimize/zoom traffic-light buttons, and no menu sizing commands.
 Only after the core launcher works, add overlay/full-screen presentation.
 
 This is important. Do not mix “presentation mode” work into the initial vertical slice.

@@ -375,8 +375,49 @@ Reason:
 - Ran packaged app executable smoke for 5 seconds: exits 0 after test kill.
 - Wrote checksum asset `.build/installer/MacLauncher-0.0.1.pkg.sha256`.
 - Manual GitHub release URL: `https://github.com/non-static/MacLauncher/releases/tag/v0.0.1`.
+- Created branch `codex/fixed-launcher-window`.
+- Changed the launcher content frame to a fixed `860x620` size.
+- Hid the launcher window close, minimize, and zoom traffic-light buttons.
+- Removed launcher window `.closable`, `.miniaturizable`, and `.resizable` style masks.
+- Set launcher window min and max content sizes to `860x620`.
+- Disabled the close, minimize, and zoom traffic-light controls in addition to hiding them.
+- Removed default Window menu sizing and arrangement command groups to block menu-triggered minimize/maximize.
+- Updated `PLAN.md` with the fixed-window/no-traffic-lights behavior.
+- Updated `README.md` current scope with fixed-window behavior.
+- Ran `git diff --check`: exits 0.
+- Ran `swift build`: exits 0.
+- Ran `swift test`: exits 0.
+- Ran `swift run MacLauncher` smoke for 5 seconds: exits 0 after test kill.
+- Re-ran `git diff --check` after menu command disable: exits 0.
+- Re-ran `swift build` after menu command disable: exits 0.
+- Re-ran `swift test` after menu command disable: exits 0.
+- Re-ran `swift run MacLauncher` smoke after menu command disable for 5 seconds: exits 0 after test kill.
+- Added SwiftUI `.windowStyle(.hiddenTitleBar)` and `.windowResizability(.contentSize)` to the launcher scene.
+- Removed the launcher window `.titled` style mask so the titlebar and traffic-light button area are gone, not only hidden.
+- Set launcher content min/max sizes to `860x620`.
+- Updated docs to describe the no-titlebar fixed launcher window.
+- Re-ran `git diff --check` after titlebar removal: exits 0.
+- Re-ran `swift build` after titlebar removal: exits 0.
+- Re-ran `swift test` after titlebar removal: exits 0.
+- Re-ran `swift run MacLauncher` smoke after titlebar removal for 5 seconds: exits 0 after test kill.
+- Rebuilt package with `VERSION=0.0.1 scripts/build-installer.sh`: exits 0.
+- Latest package SHA-256 after titlebar removal: `a66c3c8ec0d59fc323255415e780dc830381046185b4e29e85327da9bcc1cea4`.
+- Updated local `/Applications/MacLauncher.app` from `.build/installer/MacLauncher.app`.
+- Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
+- Verified installed app window through Accessibility: `0` buttons, size `860x620`, resize attempt stayed `860x620`.
+- Added a continuous `22pt` corner radius to the launcher window content layer.
+- Kept the transparent window background and refreshed the window shadow after applying the rounded mask.
+- Updated `PLAN.md` and `README.md` with rounded-corner window behavior.
+- Re-ran `git diff --check` after rounded-corner change: exits 0.
+- Re-ran `swift build` after rounded-corner change: exits 0.
+- Re-ran `swift test` after rounded-corner change: exits 0.
+- Re-ran `swift run MacLauncher` smoke after rounded-corner change for 5 seconds: exits 0 after test kill.
+- Rebuilt package with `VERSION=0.0.1 scripts/build-installer.sh`: exits 0.
+- Latest package SHA-256 after rounded-corner change: `a83273486314d90e5b4482fba62fd8bb6e9ff8548b145a57d93b571e97689c90`.
+- Updated local `/Applications/MacLauncher.app` from `.build/installer/MacLauncher.app`.
+- Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
+- Re-verified installed app window through Accessibility: `0` buttons, size `860x620`, resize attempt stayed `860x620`.
 
 ## Next steps
 
-1. Push `codex/release-0.0.1` and tag `v0.0.1`.
-2. Confirm GitHub release assets are attached.
+1. Create PR from `codex/fixed-launcher-window` when ready.
