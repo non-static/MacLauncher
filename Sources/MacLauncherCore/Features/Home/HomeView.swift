@@ -257,13 +257,24 @@ public struct HomeView: View {
 
             HStack {
                 Spacer()
-                Link(destination: LauncherMetadata.githubURL) {
-                    Text("\(LauncherMetadata.versionDisplay) GitHub")
-                        .font(.caption)
+
+                HStack(spacing: 6) {
+                    Link(destination: LauncherMetadata.githubURL) {
+                        Text(LauncherMetadata.versionDisplay)
+                    }
+                    .help("Open MacLauncher on GitHub")
+
+                    Text("·")
+                        .foregroundStyle(.tertiary)
+
+                    Link(destination: LauncherMetadata.commitURL) {
+                        Text(LauncherMetadata.commitDisplay)
+                    }
+                    .help("Open commit \(LauncherMetadata.commitDisplay) on GitHub")
                 }
+                .font(.caption)
                 .foregroundStyle(.secondary)
                 .buttonStyle(.plain)
-                .help("Open MacLauncher on GitHub")
             }
         }
         .padding(.horizontal, 24)
@@ -646,6 +657,8 @@ private struct GroupPanelView: View {
 private enum LauncherMetadata {
     static let githubURL = URL(string: "https://github.com/non-static/MacLauncher")!
     private static let fallbackVersion = "0.0.1"
+    private static let commitInfoKey = "MacLauncherGitCommit"
+    private static let resolvedCommitID = resolveCommitID()
 
     static var versionDisplay: String {
         if let bundleVersion = Bundle.main.object(
@@ -655,6 +668,93 @@ private enum LauncherMetadata {
         }
 
         return "v\(fallbackVersion)"
+    }
+
+    static var commitDisplay: String {
+        guard let resolvedCommitID else {
+            return "unknown"
+        }
+
+        return String(resolvedCommitID.prefix(7))
+    }
+
+    static var commitURL: URL {
+        guard let resolvedCommitID,
+              let url = URL(string: "\(githubURL.absoluteString)/commit/\(resolvedCommitID)")
+        else {
+            return githubURL
+        }
+
+        return url
+    }
+
+    private static func resolveCommitID() -> String? {
+        if let bundledCommit = Bundle.main.object(
+            forInfoDictionaryKey: commitInfoKey
+        ) as? String, let normalizedCommit = normalizeCommitID(bundledCommit) {
+            return normalizedCommit
+        }
+
+        let currentDirectory = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+        if let commitID = gitCommitID(in: currentDirectory) {
+            return commitID
+        }
+
+        return sourceRepositoryDirectory().flatMap(gitCommitID(in:))
+    }
+
+    private static func normalizeCommitID(_ commitID: String) -> String? {
+        let trimmedCommitID = commitID.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmedCommitID.isEmpty == false else {
+            return nil
+        }
+
+        return trimmedCommitID
+    }
+
+    private static func sourceRepositoryDirectory() -> URL? {
+        var directory = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+        for _ in 0..<10 {
+            if FileManager.default.fileExists(
+                atPath: directory.appendingPathComponent(".git", isDirectory: true).path
+            ) {
+                return directory
+            }
+            directory.deleteLastPathComponent()
+        }
+
+        return nil
+    }
+
+    private static func gitCommitID(in repositoryDirectory: URL) -> String? {
+        let process = Process()
+        let outputPipe = Pipe()
+
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+        process.arguments = [
+            "git",
+            "-C",
+            repositoryDirectory.path,
+            "rev-parse",
+            "HEAD"
+        ]
+        process.standardOutput = outputPipe
+        process.standardError = Pipe()
+
+        do {
+            try process.run()
+        } catch {
+            return nil
+        }
+
+        process.waitUntilExit()
+        guard process.terminationStatus == 0 else {
+            return nil
+        }
+
+        let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
+        let output = String(data: outputData, encoding: .utf8)
+        return output.flatMap(normalizeCommitID(_:))
     }
 }
 

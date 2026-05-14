@@ -562,9 +562,21 @@ Reason:
 - Ran `git diff --check` after Phase 8 implementation: exits 0.
 - Ran `swift build` after Phase 8 implementation: exits 0.
 - Ran `swift run MacLauncher` after Phase 8 implementation for 5 seconds: exits 0 after test kill.
+- Created branch `codex/ui-commit-link`.
+- Updated the bottom-right footer to show the app version plus the current short commit ID.
+- The version label links to the GitHub repository; the commit label links to the exact GitHub commit URL.
+- Packaged builds embed `MacLauncherGitCommit` in `Info.plist` through `scripts/build-installer.sh`.
+- `swift run` builds resolve the commit from the local git checkout at runtime.
+- Updated `PLAN.md` and `README.md` with the version/commit footer behavior.
+- Ran `swift test` after adding the commit footer: exits 0.
+- Ran `git diff --check` after adding the commit footer: exits 0.
+- Ran `swift build` after adding the commit footer: exits 0.
+- Rebuilt package with `VERSION=0.0.1 scripts/build-installer.sh`: exits 0.
+- Verified `.build/installer/MacLauncher.app/Contents/Info.plist` includes `MacLauncherGitCommit`.
+- Ran `swift run MacLauncher` after adding the commit footer for 5 seconds: exits 0 after test kill.
 
 ## Next steps
 
-1. Review Phase 8 diff on `codex/phase8-performance-polish`.
+1. Review the version/commit footer diff on `codex/ui-commit-link`.
 2. If desired, build installer and refresh local `/Applications/MacLauncher.app`.
 3. Create a PR when ready.

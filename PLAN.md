@@ -261,7 +261,7 @@ This is the first true vertical slice. Keep it brutally small.
 - Main window background opacity updates from the transparency setting.
 - Main UI includes Settings and Refresh controls.
 - Main UI hints that `Command-,` opens Settings.
-- Main UI shows the app version and a GitHub repository link in a corner.
+- Main UI shows the app version plus current commit ID in a corner, with links to the GitHub repository and commit.
 - Launcher window has no titlebar or close/minimize/zoom traffic-light buttons, and those controls are disabled if AppKit creates them.
 - Launcher window uses a fixed size and cannot be resized.
 - Launcher window has rounded corners.

@@ -15,6 +15,7 @@ APP_BUNDLE="$BUILD_DIR/$APP_NAME.app"
 PKG_ROOT="$BUILD_DIR/pkgroot"
 PKG_OUTPUT="${PKG_OUTPUT:-$BUILD_DIR/$APP_NAME-$VERSION.pkg}"
 ICON_SOURCE="$ROOT_DIR/Sources/MacLauncher/Resources/AppIcon.icns"
+GIT_COMMIT="${GIT_COMMIT:-$(git -C "$ROOT_DIR" rev-parse HEAD 2>/dev/null || true)}"
 
 if ! command -v swift >/dev/null 2>&1; then
     echo "error: swift not found" >&2
@@ -71,6 +72,8 @@ cat >"$APP_BUNDLE/Contents/Info.plist" <<PLIST
     <string>$VERSION</string>
     <key>LSMinimumSystemVersion</key>
     <string>15.0</string>
+    <key>MacLauncherGitCommit</key>
+    <string>$GIT_COMMIT</string>
     <key>NSHighResolutionCapable</key>
     <true/>
 </dict>
