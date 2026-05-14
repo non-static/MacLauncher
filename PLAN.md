@@ -426,6 +426,7 @@ Do **not** mimic old Launchpad folder animations at first. Use a simple, clean g
 - Moving an app into a group does not automatically open that group.
 - Group panel rename state is synchronized explicitly to avoid SwiftUI derived-state update cycles.
 - Grouped apps are removed from the main ungrouped grid and return when removed from or deleted with the group.
+- Search includes grouped apps even though grouped apps are hidden from the normal ungrouped grid.
 - Group state persists through `LauncherLayout.groups`.
 - Unit tests cover group creation, persisted groups, rename, delete, and moving apps into and out of groups.
 

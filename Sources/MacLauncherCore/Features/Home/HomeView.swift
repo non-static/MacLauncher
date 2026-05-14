@@ -316,6 +316,10 @@ public struct HomeView: View {
         }
     }
 
+    private var isSearchActive: Bool {
+        viewModel.searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
+    }
+
     @ViewBuilder
     private var content: some View {
         if viewModel.isLoading && viewModel.apps.isEmpty && viewModel.groups.isEmpty {
@@ -350,8 +354,8 @@ public struct HomeView: View {
 
                 if viewModel.apps.isEmpty {
                     ContentUnavailableView(
-                        "No Ungrouped Apps",
-                        systemImage: "square.grid.3x3"
+                        isSearchActive ? "No Matching Apps" : "No Ungrouped Apps",
+                        systemImage: isSearchActive ? "magnifyingglass" : "square.grid.3x3"
                     )
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {

@@ -21,11 +21,12 @@ public final class HomeViewModel: ObservableObject {
     private let onSuccessfulLaunch: @MainActor () -> Void
     private var discoveredApps: [AppItem] = []
     private var visibleApps: [AppItem] = []
+    private var searchableApps: [AppItem] = []
     private var layout = LauncherLayout()
     private var didAttemptLayoutLoad = false
 
     public var totalAppCount: Int {
-        visibleApps.count
+        searchableApps.count
     }
 
     public var selectedApp: AppItem? {
@@ -314,7 +315,7 @@ public final class HomeViewModel: ObservableObject {
         if trimmedQuery.isEmpty {
             apps = visibleApps
         } else {
-            apps = visibleApps.filter { app in
+            apps = searchableApps.filter { app in
                 app.name.range(
                     of: trimmedQuery,
                     options: [.caseInsensitive, .diacriticInsensitive]
@@ -365,9 +366,11 @@ public final class HomeViewModel: ObservableObject {
         groups = layout.groups
 
         let groupedAppIDs = Set(layout.groups.flatMap(\.appIDs))
-        visibleApps = allOrderedApps.filter { app in
+        searchableApps = allOrderedApps.filter { app in
             layout.hiddenAppIDs.contains(app.id) == false
-                && groupedAppIDs.contains(app.id) == false
+        }
+        visibleApps = searchableApps.filter { app in
+            groupedAppIDs.contains(app.id) == false
         }
         hiddenAppCount = allOrderedApps.filter { layout.hiddenAppIDs.contains($0.id) }.count
         applySearch()
