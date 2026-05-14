@@ -1,7 +1,7 @@
 import AppKit
 import Foundation
 
-public final class NSWorkspaceCatalogService: AppCatalogService {
+public final class NSWorkspaceCatalogService: AppCatalogService, @unchecked Sendable {
     private let fileManager: FileManager
     private let scanDirectories: [URL]
 

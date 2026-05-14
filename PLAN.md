@@ -434,6 +434,8 @@ Do **not** mimic old Launchpad folder animations at first. Use a simple, clean g
 
 ## Phase 6 — Full-screen presentation mode
 
+Status: Skipped for now per the 2026-05-14 Phase 8 request.
+
 ### Outcome
 The app feels like a launcher instead of a standard utility window.
 
@@ -454,6 +456,8 @@ Keep this separate from the core launcher logic. Presentation should be swappabl
 ---
 
 ## Phase 7 — Global hotkey
+
+Status: Skipped for now per the 2026-05-14 Phase 8 request.
 
 ### Outcome
 The launcher becomes practical for daily use.
@@ -492,6 +496,16 @@ The launcher feels fast and robust.
 - Scanning does not freeze the UI.
 - Search remains responsive with many apps.
 - Icons appear smoothly.
+
+### Implemented in this pass
+- App scanning now runs from `HomeViewModel.refresh()` on a detached user-initiated task, with cancellation and generation checks so stale scans cannot overwrite newer results.
+- Refresh cancellation cancels the detached scan task handle when possible.
+- Refresh shows a loading summary and a scanning progress state while the initial catalog load is running.
+- App icons are cached by `iconCacheKey` in `NSWorkspaceAppIconLoader` to avoid repeated `NSWorkspace` icon lookups during grid redraws.
+- Grid changes fade/scale in with a short animation so refreshed app results appear smoothly.
+- The launcher window is identified and centered on the screen containing the pointer when it is focused on launch, clamped to the screen visible frame for multi-monitor setups.
+- Existing search stays synchronous because filtering is cheap after scanning moved off the main actor; no debounce is currently needed.
+- Tests now await refresh completion and cover the loading state during a background scan.
 
 ---
 

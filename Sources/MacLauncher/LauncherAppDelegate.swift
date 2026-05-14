@@ -36,11 +36,37 @@ final class LauncherAppDelegate: NSObject, NSApplicationDelegate {
 
     private static func focusWindows() {
         NSApp.activate(ignoringOtherApps: true)
+        let preferredScreen = preferredScreen()
 
         for window in NSApp.windows where window.canBecomeKey {
+            if window.identifier == LauncherWindowIdentifiers.launcher,
+               let preferredScreen
+            {
+                center(window, on: preferredScreen)
+            }
             window.makeKeyAndOrderFront(nil)
             window.orderFrontRegardless()
         }
+    }
+
+    private static func preferredScreen() -> NSScreen? {
+        let mouseLocation = NSEvent.mouseLocation
+        return NSScreen.screens.first { screen in
+            NSMouseInRect(mouseLocation, screen.frame, false)
+        } ?? NSScreen.main ?? NSScreen.screens.first
+    }
+
+    private static func center(_ window: NSWindow, on screen: NSScreen) {
+        let visibleFrame = screen.visibleFrame
+        let windowSize = window.frame.size
+        let maxX = max(visibleFrame.minX, visibleFrame.maxX - windowSize.width)
+        let maxY = max(visibleFrame.minY, visibleFrame.maxY - windowSize.height)
+        let origin = NSPoint(
+            x: min(max(visibleFrame.midX - (windowSize.width / 2), visibleFrame.minX), maxX),
+            y: min(max(visibleFrame.midY - (windowSize.height / 2), visibleFrame.minY), maxY)
+        )
+
+        window.setFrameOrigin(origin)
     }
 
     static func terminateAfterSuccessfulLaunch() {

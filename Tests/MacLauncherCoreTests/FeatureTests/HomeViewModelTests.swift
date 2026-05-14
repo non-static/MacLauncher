@@ -5,14 +5,14 @@ import Testing
 @MainActor
 struct HomeViewModelTests {
     @Test
-    func refreshLoadsApps() {
+    func refreshLoadsApps() async {
         let app = makeApp()
         let viewModel = HomeViewModel(
             catalogService: StubCatalogService(apps: [app]),
             launchService: StubLaunchService()
         )
 
-        viewModel.refresh()
+        await viewModel.refresh().value
 
         #expect(viewModel.apps == [app])
         #expect(viewModel.totalAppCount == 1)
@@ -21,20 +21,41 @@ struct HomeViewModelTests {
     }
 
     @Test
-    func refreshFailureSetsError() {
+    func refreshShowsLoadingWhileScanning() async {
+        let app = makeApp()
+        let viewModel = HomeViewModel(
+            catalogService: StubCatalogService(
+                apps: [app],
+                delay: 0.04
+            ),
+            launchService: StubLaunchService()
+        )
+
+        let refreshTask = viewModel.refresh()
+
+        #expect(viewModel.isLoading)
+
+        await refreshTask.value
+
+        #expect(viewModel.isLoading == false)
+        #expect(viewModel.apps == [app])
+    }
+
+    @Test
+    func refreshFailureSetsError() async {
         let viewModel = HomeViewModel(
             catalogService: StubCatalogService(error: StubError.failed),
             launchService: StubLaunchService()
         )
 
-        viewModel.refresh()
+        await viewModel.refresh().value
 
         #expect(viewModel.apps.isEmpty)
         #expect(viewModel.errorMessage != nil)
     }
 
     @Test
-    func refreshAppliesPersistedOrderAndHiddenApps() {
+    func refreshAppliesPersistedOrderAndHiddenApps() async {
         let apps = [
             makeApp(id: "com.example.one", name: "One"),
             makeApp(id: "com.example.two", name: "Two"),
@@ -52,7 +73,7 @@ struct HomeViewModelTests {
             layoutStore: store
         )
 
-        viewModel.refresh()
+        await viewModel.refresh().value
 
         #expect(viewModel.apps == [apps[1], apps[0]])
         #expect(viewModel.totalAppCount == 2)
@@ -61,7 +82,7 @@ struct HomeViewModelTests {
     }
 
     @Test
-    func hideAppPersistsLayoutAndRemovesAppFromGrid() {
+    func hideAppPersistsLayoutAndRemovesAppFromGrid() async {
         let apps = [
             makeApp(id: "com.example.one", name: "One"),
             makeApp(id: "com.example.two", name: "Two"),
@@ -74,7 +95,7 @@ struct HomeViewModelTests {
             layoutStore: store
         )
 
-        viewModel.refresh()
+        await viewModel.refresh().value
         viewModel.hideApp(apps[1])
 
         #expect(viewModel.apps == [apps[0], apps[2]])
@@ -83,7 +104,7 @@ struct HomeViewModelTests {
     }
 
     @Test
-    func createGroupFromSelectedAppPersistsGroupAndRemovesAppFromGrid() throws {
+    func createGroupFromSelectedAppPersistsGroupAndRemovesAppFromGrid() async throws {
         let apps = [
             makeApp(id: "com.example.one", name: "One"),
             makeApp(id: "com.example.two", name: "Two"),
@@ -96,7 +117,7 @@ struct HomeViewModelTests {
             layoutStore: store
         )
 
-        viewModel.refresh()
+        await viewModel.refresh().value
         viewModel.moveSelection(by: 1)
         let group = try #require(viewModel.createGroupFromSelectedApp())
 
@@ -108,7 +129,7 @@ struct HomeViewModelTests {
     }
 
     @Test
-    func moveAppIntoAndOutOfGroupPersistsMembership() throws {
+    func moveAppIntoAndOutOfGroupPersistsMembership() async throws {
         let apps = [
             makeApp(id: "com.example.one", name: "One"),
             makeApp(id: "com.example.two", name: "Two"),
@@ -121,7 +142,7 @@ struct HomeViewModelTests {
             layoutStore: store
         )
 
-        viewModel.refresh()
+        await viewModel.refresh().value
         let group = viewModel.createGroup(containing: apps[0])
         viewModel.moveApp(apps[2], toGroup: group.id)
 
@@ -137,7 +158,7 @@ struct HomeViewModelTests {
     }
 
     @Test
-    func moveAppIDToGroupSupportsDropWithoutOpeningGroup() {
+    func moveAppIDToGroupSupportsDropWithoutOpeningGroup() async {
         let apps = [
             makeApp(id: "com.example.one", name: "One"),
             makeApp(id: "com.example.two", name: "Two")
@@ -149,7 +170,7 @@ struct HomeViewModelTests {
             layoutStore: store
         )
 
-        viewModel.refresh()
+        await viewModel.refresh().value
         let group = viewModel.createGroup(containing: apps[0])
         viewModel.moveApp(appID: apps[1].id, toGroup: group.id)
 
@@ -159,7 +180,7 @@ struct HomeViewModelTests {
     }
 
     @Test
-    func renameGroupPersistsTrimmedUniqueName() throws {
+    func renameGroupPersistsTrimmedUniqueName() async throws {
         let apps = [
             makeApp(id: "com.example.one", name: "One"),
             makeApp(id: "com.example.two", name: "Two")
@@ -171,7 +192,7 @@ struct HomeViewModelTests {
             layoutStore: store
         )
 
-        viewModel.refresh()
+        await viewModel.refresh().value
         let firstGroup = viewModel.createGroup(containing: apps[0])
         _ = viewModel.createGroup(containing: apps[1])
         viewModel.renameGroup(groupID: firstGroup.id, name: "  New Group 2  ")
@@ -181,7 +202,7 @@ struct HomeViewModelTests {
     }
 
     @Test
-    func deleteGroupRestoresGroupedAppsToGrid() {
+    func deleteGroupRestoresGroupedAppsToGrid() async {
         let apps = [
             makeApp(id: "com.example.one", name: "One"),
             makeApp(id: "com.example.two", name: "Two")
@@ -193,7 +214,7 @@ struct HomeViewModelTests {
             layoutStore: store
         )
 
-        viewModel.refresh()
+        await viewModel.refresh().value
         let group = viewModel.createGroup(containing: apps[0])
         viewModel.deleteGroup(groupID: group.id)
 
@@ -203,7 +224,7 @@ struct HomeViewModelTests {
     }
 
     @Test
-    func refreshAppliesPersistedGroups() throws {
+    func refreshAppliesPersistedGroups() async throws {
         let apps = [
             makeApp(id: "com.example.one", name: "One"),
             makeApp(id: "com.example.two", name: "Two"),
@@ -225,7 +246,7 @@ struct HomeViewModelTests {
             )
         )
 
-        viewModel.refresh()
+        await viewModel.refresh().value
 
         #expect(viewModel.groups == [group])
         #expect(viewModel.apps == [apps[0], apps[2]])
@@ -233,7 +254,7 @@ struct HomeViewModelTests {
     }
 
     @Test
-    func moveAppInLayoutPersistsCustomOrder() {
+    func moveAppInLayoutPersistsCustomOrder() async {
         let apps = [
             makeApp(id: "com.example.one", name: "One"),
             makeApp(id: "com.example.two", name: "Two"),
@@ -246,7 +267,7 @@ struct HomeViewModelTests {
             layoutStore: store
         )
 
-        viewModel.refresh()
+        await viewModel.refresh().value
         viewModel.moveAppInLayout(apps[2], by: -2)
 
         #expect(viewModel.apps == [apps[2], apps[0], apps[1]])
@@ -259,7 +280,7 @@ struct HomeViewModelTests {
     }
 
     @Test
-    func reorderAppInLayoutPersistsDroppedOrder() {
+    func reorderAppInLayoutPersistsDroppedOrder() async {
         let apps = [
             makeApp(id: "com.example.one", name: "One"),
             makeApp(id: "com.example.two", name: "Two"),
@@ -273,7 +294,7 @@ struct HomeViewModelTests {
             layoutStore: store
         )
 
-        viewModel.refresh()
+        await viewModel.refresh().value
         let didReorder = viewModel.reorderAppInLayout(
             draggedAppID: apps[0].id,
             targetAppID: apps[2].id
@@ -291,7 +312,7 @@ struct HomeViewModelTests {
     }
 
     @Test
-    func reorderAppInLayoutSurvivesRefreshFromStore() {
+    func reorderAppInLayoutSurvivesRefreshFromStore() async {
         let apps = [
             makeApp(id: "com.example.one", name: "One"),
             makeApp(id: "com.example.two", name: "Two"),
@@ -303,7 +324,7 @@ struct HomeViewModelTests {
             launchService: StubLaunchService(),
             layoutStore: store
         )
-        firstViewModel.refresh()
+        await firstViewModel.refresh().value
         firstViewModel.reorderAppInLayout(draggedAppID: apps[2].id, targetAppID: apps[0].id)
 
         let secondViewModel = HomeViewModel(
@@ -311,13 +332,13 @@ struct HomeViewModelTests {
             launchService: StubLaunchService(),
             layoutStore: store
         )
-        secondViewModel.refresh()
+        await secondViewModel.refresh().value
 
         #expect(secondViewModel.apps == [apps[2], apps[0], apps[1]])
     }
 
     @Test
-    func reorderAppInLayoutCanMoveAppToFirstIndex() {
+    func reorderAppInLayoutCanMoveAppToFirstIndex() async {
         let apps = [
             makeApp(id: "com.example.one", name: "One"),
             makeApp(id: "com.example.two", name: "Two"),
@@ -330,7 +351,7 @@ struct HomeViewModelTests {
             layoutStore: store
         )
 
-        viewModel.refresh()
+        await viewModel.refresh().value
         let didReorder = viewModel.reorderAppInLayout(
             draggedAppID: apps[2].id,
             targetIndex: 0
@@ -346,7 +367,7 @@ struct HomeViewModelTests {
     }
 
     @Test
-    func reorderAppInLayoutCanMoveAppAfterLastIndex() {
+    func reorderAppInLayoutCanMoveAppAfterLastIndex() async {
         let apps = [
             makeApp(id: "com.example.one", name: "One"),
             makeApp(id: "com.example.two", name: "Two"),
@@ -359,7 +380,7 @@ struct HomeViewModelTests {
             layoutStore: store
         )
 
-        viewModel.refresh()
+        await viewModel.refresh().value
         let didReorder = viewModel.reorderAppInLayout(
             draggedAppID: apps[0].id,
             targetIndex: apps.count
@@ -375,7 +396,7 @@ struct HomeViewModelTests {
     }
 
     @Test
-    func reorderAppInLayoutRejectsInvalidDropWithoutSaving() {
+    func reorderAppInLayoutRejectsInvalidDropWithoutSaving() async {
         let apps = [
             makeApp(id: "com.example.one", name: "One"),
             makeApp(id: "com.example.two", name: "Two")
@@ -387,7 +408,7 @@ struct HomeViewModelTests {
             layoutStore: store
         )
 
-        viewModel.refresh()
+        await viewModel.refresh().value
         let saveCount = store.savedLayouts.count
         let didReorderSameApp = viewModel.reorderAppInLayout(
             draggedAppID: apps[0].id,
@@ -410,7 +431,7 @@ struct HomeViewModelTests {
     }
 
     @Test
-    func resetLayoutRestoresScannedOrderAndHiddenApps() {
+    func resetLayoutRestoresScannedOrderAndHiddenApps() async {
         let apps = [
             makeApp(id: "com.example.one", name: "One"),
             makeApp(id: "com.example.two", name: "Two"),
@@ -428,7 +449,7 @@ struct HomeViewModelTests {
             layoutStore: store
         )
 
-        viewModel.refresh()
+        await viewModel.refresh().value
         viewModel.resetLayout()
 
         #expect(viewModel.apps == apps)
@@ -437,7 +458,7 @@ struct HomeViewModelTests {
     }
 
     @Test
-    func loadLayoutFailureFallsBackToScannedApps() {
+    func loadLayoutFailureFallsBackToScannedApps() async {
         let app = makeApp()
         let viewModel = HomeViewModel(
             catalogService: StubCatalogService(apps: [app]),
@@ -445,14 +466,14 @@ struct HomeViewModelTests {
             layoutStore: StubLayoutStore(loadError: StubError.failed)
         )
 
-        viewModel.refresh()
+        await viewModel.refresh().value
 
         #expect(viewModel.apps == [app])
         #expect(viewModel.errorMessage == nil)
     }
 
     @Test
-    func unsupportedLayoutVersionFallsBackToScannedApps() {
+    func unsupportedLayoutVersionFallsBackToScannedApps() async {
         let apps = [
             makeApp(id: "com.example.one", name: "One"),
             makeApp(id: "com.example.two", name: "Two")
@@ -469,14 +490,14 @@ struct HomeViewModelTests {
             )
         )
 
-        viewModel.refresh()
+        await viewModel.refresh().value
 
         #expect(viewModel.apps == apps)
         #expect(viewModel.hiddenAppCount == 0)
     }
 
     @Test
-    func searchFiltersAppsByNameAndClearRestoresAllApps() {
+    func searchFiltersAppsByNameAndClearRestoresAllApps() async {
         let apps = [
             makeApp(id: "com.example.safari", name: "Safari"),
             makeApp(id: "com.example.terminal", name: "Terminal"),
@@ -487,7 +508,7 @@ struct HomeViewModelTests {
             launchService: StubLaunchService()
         )
 
-        viewModel.refresh()
+        await viewModel.refresh().value
         viewModel.searchQuery = "TER"
 
         #expect(viewModel.apps == [apps[1]])
@@ -500,7 +521,7 @@ struct HomeViewModelTests {
     }
 
     @Test
-    func searchIncludesGroupedAppsAndClearRestoresUngroupedGrid() {
+    func searchIncludesGroupedAppsAndClearRestoresUngroupedGrid() async {
         let apps = [
             makeApp(id: "com.example.safari", name: "Safari"),
             makeApp(id: "com.example.terminal", name: "Terminal"),
@@ -511,7 +532,7 @@ struct HomeViewModelTests {
             launchService: StubLaunchService()
         )
 
-        viewModel.refresh()
+        await viewModel.refresh().value
         viewModel.createGroup(containing: apps[1])
         viewModel.searchQuery = "TER"
 
@@ -525,7 +546,7 @@ struct HomeViewModelTests {
     }
 
     @Test
-    func selectionMovesWithinVisibleApps() {
+    func selectionMovesWithinVisibleApps() async {
         let apps = [
             makeApp(id: "com.example.one", name: "One"),
             makeApp(id: "com.example.two", name: "Two"),
@@ -536,7 +557,7 @@ struct HomeViewModelTests {
             launchService: StubLaunchService()
         )
 
-        viewModel.refresh()
+        await viewModel.refresh().value
         viewModel.moveSelection(by: 1)
         #expect(viewModel.selectedAppID == apps[1].id)
 
@@ -548,7 +569,7 @@ struct HomeViewModelTests {
     }
 
     @Test
-    func searchReconcilesSelectionToVisibleApps() {
+    func searchReconcilesSelectionToVisibleApps() async {
         let apps = [
             makeApp(id: "com.example.calendar", name: "Calendar"),
             makeApp(id: "com.example.safari", name: "Safari"),
@@ -559,7 +580,7 @@ struct HomeViewModelTests {
             launchService: StubLaunchService()
         )
 
-        viewModel.refresh()
+        await viewModel.refresh().value
         viewModel.moveSelection(by: 2)
         viewModel.searchQuery = "saf"
 
@@ -568,7 +589,7 @@ struct HomeViewModelTests {
     }
 
     @Test
-    func resetSearchToLoadedStateClearsQueryAndSelectsFirstApp() {
+    func resetSearchToLoadedStateClearsQueryAndSelectsFirstApp() async {
         let apps = [
             makeApp(id: "com.example.safari", name: "Safari"),
             makeApp(id: "com.example.terminal", name: "Terminal"),
@@ -579,7 +600,7 @@ struct HomeViewModelTests {
             launchService: StubLaunchService()
         )
 
-        viewModel.refresh()
+        await viewModel.refresh().value
         viewModel.moveSelection(by: 2)
         viewModel.searchQuery = "ter"
 
@@ -592,14 +613,14 @@ struct HomeViewModelTests {
     }
 
     @Test
-    func resetSearchToLoadedStateReturnsFalseWhenQueryIsEmpty() {
+    func resetSearchToLoadedStateReturnsFalseWhenQueryIsEmpty() async {
         let app = makeApp()
         let viewModel = HomeViewModel(
             catalogService: StubCatalogService(apps: [app]),
             launchService: StubLaunchService()
         )
 
-        viewModel.refresh()
+        await viewModel.refresh().value
 
         #expect(viewModel.resetSearchToLoadedState() == false)
         #expect(viewModel.apps == [app])
@@ -657,7 +678,7 @@ struct HomeViewModelTests {
             }
         )
 
-        viewModel.refresh()
+        await viewModel.refresh().value
         viewModel.moveSelection(by: 1)
         if let task = viewModel.launchSelected() {
             await task.value
@@ -683,7 +704,7 @@ struct HomeViewModelTests {
             }
         )
 
-        viewModel.refresh()
+        await viewModel.refresh().value
         let group = viewModel.createGroup(containing: apps[1])
         if let task = viewModel.launchApp(appID: apps[1].id, fromGroupID: group.id) {
             await task.value
@@ -710,8 +731,13 @@ struct HomeViewModelTests {
 private struct StubCatalogService: AppCatalogService {
     var apps: [AppItem] = []
     var error: Error?
+    var delay: TimeInterval = 0
 
     func installedApps() throws -> [AppItem] {
+        if delay > 0 {
+            Thread.sleep(forTimeInterval: delay)
+        }
+
         if let error {
             throw error
         }

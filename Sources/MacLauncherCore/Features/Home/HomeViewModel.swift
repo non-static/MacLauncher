@@ -24,6 +24,8 @@ public final class HomeViewModel: ObservableObject {
     private var searchableApps: [AppItem] = []
     private var layout = LauncherLayout()
     private var didAttemptLayoutLoad = false
+    private var refreshTask: Task<Void, Never>?
+    private var refreshGeneration = 0
 
     public var totalAppCount: Int {
         searchableApps.count
@@ -66,18 +68,28 @@ public final class HomeViewModel: ObservableObject {
         self.onSuccessfulLaunch = onSuccessfulLaunch
     }
 
-    public func refresh() {
-        isLoading = true
-        defer { isLoading = false }
+    @discardableResult
+    public func refresh() -> Task<Void, Never> {
+        refreshTask?.cancel()
+        refreshGeneration += 1
+        let generation = refreshGeneration
+        let catalogService = catalogService
 
-        do {
-            loadLayoutIfNeeded()
-            discoveredApps = try catalogService.installedApps()
-            applyLayoutAndSearch()
-            errorMessage = nil
-        } catch {
-            errorMessage = "Could not refresh apps: \(error.localizedDescription)"
+        loadLayoutIfNeeded()
+        isLoading = true
+
+        let task = Task { [weak self, catalogService] in
+            guard let self else {
+                return
+            }
+
+            await self.performRefresh(
+                using: catalogService,
+                generation: generation
+            )
         }
+        refreshTask = task
+        return task
     }
 
     public func moveSelection(by offset: Int) {
@@ -323,6 +335,59 @@ public final class HomeViewModel: ObservableObject {
             }
         }
         reconcileSelection()
+    }
+
+    private func performRefresh(
+        using catalogService: any AppCatalogService,
+        generation: Int
+    ) async {
+        defer {
+            completeRefresh(generation: generation)
+        }
+
+        do {
+            let scannedApps = try await Self.scanInstalledApps(using: catalogService)
+            guard generation == refreshGeneration, Task.isCancelled == false else {
+                return
+            }
+
+            discoveredApps = scannedApps
+            applyLayoutAndSearch()
+            errorMessage = nil
+        } catch is CancellationError {
+            return
+        } catch {
+            guard generation == refreshGeneration else {
+                return
+            }
+            errorMessage = "Could not refresh apps: \(error.localizedDescription)"
+        }
+    }
+
+    nonisolated private static func scanInstalledApps(
+        using catalogService: any AppCatalogService
+    ) async throws -> [AppItem] {
+        let scanTask = Task.detached(priority: .userInitiated) {
+            try Task.checkCancellation()
+            let apps = try catalogService.installedApps()
+            try Task.checkCancellation()
+            return apps
+        }
+
+        return try await withTaskCancellationHandler {
+            try await scanTask.value
+        } onCancel: {
+            scanTask.cancel()
+        }
+    }
+
+    private func completeRefresh(generation: Int) {
+        guard generation == refreshGeneration else {
+            return
+        }
+
+        isLoading = false
+        refreshTask = nil
     }
 
     private func loadLayoutIfNeeded() {

@@ -546,7 +546,25 @@ Reason:
 - Updated local `/Applications/MacLauncher.app` from `.build/installer/MacLauncher.app`.
 - Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
 - Ran installed app executable smoke for 5 seconds after grouped-app search fix: exits 0 after test kill.
+- Created branch `codex/phase8-performance-polish` from `main` for Phase 8 work, skipping Phase 6 and Phase 7 per request.
+- Implemented Phase 8 performance and polish pass:
+  - `HomeViewModel.refresh()` now returns a task and runs catalog scanning in a detached user-initiated task.
+  - Refresh uses cancellation plus generation checks so older scans cannot overwrite newer scan results.
+  - Refresh cancellation now cancels the detached scan task handle when possible.
+  - Initial catalog loading now shows `Scanning Applications...` and the header summary reports scanning while refresh is active.
+  - `NSWorkspaceAppIconLoader` now caches icons by `iconCacheKey`.
+  - App-grid changes now use a short opacity/scale transition.
+  - The launcher window now has a stable identifier and centers on the monitor containing the pointer when focused on launch.
+  - Phase 6 and Phase 7 are marked skipped for now in `PLAN.md`.
+- Updated `HomeViewModelTests` to await async refresh completion.
+- Added coverage that refresh exposes `isLoading` while scan work is running.
+- Ran `swift test` after Phase 8 implementation: exits 0.
+- Ran `git diff --check` after Phase 8 implementation: exits 0.
+- Ran `swift build` after Phase 8 implementation: exits 0.
+- Ran `swift run MacLauncher` after Phase 8 implementation for 5 seconds: exits 0 after test kill.
 
 ## Next steps
 
-1. Create PR from `codex/search-grouped-apps` when ready.
+1. Review Phase 8 diff on `codex/phase8-performance-polish`.
+2. If desired, build installer and refresh local `/Applications/MacLauncher.app`.
+3. Create a PR when ready.
