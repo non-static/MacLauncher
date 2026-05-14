@@ -531,7 +531,22 @@ Reason:
 - Updated local `/Applications/MacLauncher.app` from `.build/installer/MacLauncher.app`.
 - Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
 - Ran installed app executable smoke for 5 seconds after replacing the group sheet: exits 0 after test kill.
+- Created branch `codex/search-grouped-apps`.
+- Fixed search to include all non-hidden apps, including apps inside groups.
+- Kept grouped apps hidden from the normal ungrouped grid when the search query is empty.
+- Updated grouped-empty search UI to show `No Matching Apps` instead of `No Ungrouped Apps` while searching.
+- Added unit coverage that grouped apps appear in search and clearing search restores the ungrouped grid.
+- Updated `PLAN.md` with grouped-app search behavior.
+- Ran `git diff --check` after grouped-app search fix: exits 0.
+- Ran `swift build` after grouped-app search fix: exits 0.
+- Ran `swift test` after grouped-app search fix: exits 0.
+- Ran `swift run MacLauncher` after grouped-app search fix for 5 seconds: exits 0 after test kill.
+- Rebuilt package with `VERSION=0.0.1 scripts/build-installer.sh`: exits 0.
+- Latest package SHA-256 after grouped-app search fix: `8085ed3ad66d6c6d4a3fe662d85211bcbed0510bc72853224c0d0dc35540b627`.
+- Updated local `/Applications/MacLauncher.app` from `.build/installer/MacLauncher.app`.
+- Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
+- Ran installed app executable smoke for 5 seconds after grouped-app search fix: exits 0 after test kill.
 
 ## Next steps
 
-1. Create PR from `codex/phase5-groups` when ready.
+1. Create PR from `codex/search-grouped-apps` when ready.

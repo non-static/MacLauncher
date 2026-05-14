@@ -500,6 +500,31 @@ struct HomeViewModelTests {
     }
 
     @Test
+    func searchIncludesGroupedAppsAndClearRestoresUngroupedGrid() {
+        let apps = [
+            makeApp(id: "com.example.safari", name: "Safari"),
+            makeApp(id: "com.example.terminal", name: "Terminal"),
+            makeApp(id: "com.example.preview", name: "Preview")
+        ]
+        let viewModel = HomeViewModel(
+            catalogService: StubCatalogService(apps: apps),
+            launchService: StubLaunchService()
+        )
+
+        viewModel.refresh()
+        viewModel.createGroup(containing: apps[1])
+        viewModel.searchQuery = "TER"
+
+        #expect(viewModel.apps == [apps[1]])
+        #expect(viewModel.selectedAppID == apps[1].id)
+        #expect(viewModel.totalAppCount == 3)
+
+        viewModel.searchQuery = ""
+
+        #expect(viewModel.apps == [apps[0], apps[2]])
+    }
+
+    @Test
     func selectionMovesWithinVisibleApps() {
         let apps = [
             makeApp(id: "com.example.one", name: "One"),
