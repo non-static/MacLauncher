@@ -29,6 +29,7 @@ struct WindowTransparencyConfigurator: NSViewRepresentable {
         window.isOpaque = false
         window.backgroundColor = .clear
         window.hasShadow = true
+        window.identifier = LauncherWindowIdentifiers.launcher
         window.title = ""
         window.titleVisibility = .hidden
         window.titlebarAppearsTransparent = true

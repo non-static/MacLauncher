@@ -157,6 +157,10 @@ public struct HomeView: View {
     }
 
     private var appCountSummary: String {
+        if viewModel.isLoading {
+            return "Scanning applications..."
+        }
+
         if viewModel.hiddenAppCount > 0 {
             return "\(viewModel.apps.count) of \(viewModel.totalAppCount) apps, \(viewModel.hiddenAppCount) hidden"
         }
@@ -323,7 +327,7 @@ public struct HomeView: View {
     @ViewBuilder
     private var content: some View {
         if viewModel.isLoading && viewModel.apps.isEmpty && viewModel.groups.isEmpty {
-            ProgressView()
+            ProgressView("Scanning Applications...")
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if viewModel.apps.isEmpty && viewModel.groups.isEmpty {
             ContentUnavailableView(
@@ -391,6 +395,8 @@ public struct HomeView: View {
                     )
                 }
             }
+            .animation(.easeInOut(duration: 0.16), value: viewModel.apps.map(\.id))
+            .animation(.easeInOut(duration: 0.16), value: viewModel.groups.map(\.id))
         }
     }
 

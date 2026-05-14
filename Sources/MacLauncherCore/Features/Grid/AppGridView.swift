@@ -123,9 +123,11 @@ public struct AppGridView: View {
                                 .frame(maxWidth: .infinity, alignment: .trailing)
                             }
                             .frame(width: LauncherDesign.tileWidth, height: LauncherDesign.tileHeight)
+                            .transition(.opacity.combined(with: .scale(scale: 0.98)))
                         }
                     }
                     .padding(Self.gridPadding)
+                    .animation(.easeInOut(duration: 0.16), value: apps.map(\.id))
                 }
                 .overlay(alignment: .top) {
                     edgeScrollZone(
