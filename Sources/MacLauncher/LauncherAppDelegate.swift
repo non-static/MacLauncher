@@ -1,7 +1,10 @@
 import AppKit
+import Darwin
 
 @MainActor
 final class LauncherAppDelegate: NSObject, NSApplicationDelegate {
+    private static var didRequestLaunchTermination = false
+
     var launcherEscapeHandler: (@MainActor () -> Bool)?
 
     private var escapeKeyMonitor: Any?
@@ -37,6 +40,20 @@ final class LauncherAppDelegate: NSObject, NSApplicationDelegate {
         for window in NSApp.windows where window.canBecomeKey {
             window.makeKeyAndOrderFront(nil)
             window.orderFrontRegardless()
+        }
+    }
+
+    static func terminateAfterSuccessfulLaunch() {
+        guard didRequestLaunchTermination == false else {
+            return
+        }
+
+        didRequestLaunchTermination = true
+        NSApp.terminate(nil)
+
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 350_000_000)
+            Darwin.exit(EXIT_SUCCESS)
         }
     }
 

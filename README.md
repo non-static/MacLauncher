@@ -76,6 +76,7 @@ Completed vertical slice:
 - background transparency setting, defaulting to 30%
 - bottom-right version label with a GitHub repository link
 - fixed-size launcher window with rounded corners, no titlebar, no close/minimize/zoom traffic-light buttons, and no menu sizing commands
+- custom groups with a group shelf, drag/drop into groups, nested group panel, rename, delete, and move in/out support
 
 ## Settings
 

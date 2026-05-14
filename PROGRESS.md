@@ -417,7 +417,121 @@ Reason:
 - Updated local `/Applications/MacLauncher.app` from `.build/installer/MacLauncher.app`.
 - Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
 - Re-verified installed app window through Accessibility: `0` buttons, size `860x620`, resize attempt stayed `860x620`.
+- Created branch `codex/phase5-groups`.
+- Added Phase 5 group behavior to `HomeViewModel`:
+  - create a group from selected app
+  - move selected/app context targets into groups
+  - remove apps from groups
+  - rename groups
+  - delete groups
+  - load and persist `LauncherLayout.groups`
+- Grouped apps now leave the main ungrouped app grid and return when removed from or deleted with a group.
+- Added group shelf UI above the main grid.
+- Added group panel sheet with nested app grid, rename control, remove-from-group context action, and delete group action.
+- Added app grid context menu actions for creating a group from an app and moving an app to an existing group.
+- Added Layout menu actions for creating a group from the selected app and moving the selected app to an existing group.
+- Added Phase 5 unit tests for group creation, persisted groups, rename, delete, and moving apps into/out of groups.
+- Updated `PLAN.md` with Phase 5 implementation details.
+- Updated `README.md` current scope with custom group support.
+- Ran `git diff --check` during Phase 5 implementation: exits 0.
+- Ran `swift build` during Phase 5 implementation: exits 0.
+- Ran `swift test` during Phase 5 implementation: exits 0.
+- Re-ran `git diff --check` after Phase 5 docs: exits 0.
+- Re-ran `swift build` after Phase 5 docs: exits 0.
+- Re-ran `swift test` after Phase 5 docs: exits 0.
+- Ran `swift run MacLauncher` Phase 5 smoke for 5 seconds: exits 0 after test kill.
+- Rebuilt package with `VERSION=0.0.1 scripts/build-installer.sh`: exits 0.
+- Latest package SHA-256 after Phase 5 groups: `3caad478730beb89d61779c291a4a09516816907d13471130ce16e913afff670`.
+- Updated local `/Applications/MacLauncher.app` from `.build/installer/MacLauncher.app`.
+- Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
+- Re-verified installed app window through Accessibility: `0` buttons, size `860x620`, resize attempt stayed `860x620`.
+- Added drag/drop support from app tiles onto group shelf items.
+- Group shelf tiles now show an accent border while targeted by a drag.
+- Added `HomeViewModel.moveApp(appID:toGroup:)` for drop-based group moves.
+- Moving an app into an existing group no longer auto-opens that group.
+- Creating a group from an app no longer auto-opens that group.
+- Pressing Escape closes an open group panel before clearing search or quitting the app.
+- Added unit coverage for ID-based group moves used by drag/drop.
+- Updated `PLAN.md` and `README.md` with group drag/drop and Escape group-close behavior.
+- Re-ran `git diff --check` after group drag/drop change: exits 0.
+- Re-ran `swift build` after group drag/drop change: exits 0.
+- Re-ran `swift test` after group drag/drop change: exits 0.
+- Ran `swift run MacLauncher` after group drag/drop change for 5 seconds: exits 0 after test kill.
+- Rebuilt package with `VERSION=0.0.1 scripts/build-installer.sh`: exits 0.
+- Latest package SHA-256 after group drag/drop change: `e87b282bcb8108434ad822978f61acbce29f900b7acc975442acbed412d45c22`.
+- Updated local `/Applications/MacLauncher.app` from `.build/installer/MacLauncher.app`.
+- Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
+- Re-verified installed app window through Accessibility: `0` buttons, size `860x620`, resize attempt stayed `860x620`.
+- Added explicit `HomeViewModel.launchApp(appID:fromGroupID:)` for group-panel app launches.
+- Group panel app clicks now use the group-aware launch path, which calls the normal launch success handler and exits MacLauncher after successful launch.
+- Added unit coverage that launching a grouped app runs the launch success handler.
+- Updated `PLAN.md` with grouped-app launch exit behavior.
+- Re-ran `git diff --check` after grouped launch exit change: exits 0.
+- Re-ran `swift build` after grouped launch exit change: exits 0.
+- Re-ran `swift test` after grouped launch exit change: exits 0.
+- Ran `swift run MacLauncher` after grouped launch exit change for 5 seconds: exits 0 after test kill.
+- Rebuilt package with `VERSION=0.0.1 scripts/build-installer.sh`: exits 0.
+- Latest package SHA-256 after grouped launch exit change: `d5942426adb3786b5713c10727a5ba992c2f17ada67f962a74accec241f56e03`.
+- Updated local `/Applications/MacLauncher.app` from `.build/installer/MacLauncher.app`.
+- Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
+- Re-verified installed app window through Accessibility: `0` buttons, size `860x620`, resize attempt stayed `860x620`.
+- Rebuilt package for local install refresh with `VERSION=0.0.1 scripts/build-installer.sh`: exits 0.
+- Latest package SHA-256 after local install refresh: `11428a77570b3fb7481bf8862ac2289d67d10b413b624427bceb3d3f2d494240`.
+- Refreshed local `/Applications/MacLauncher.app` from `.build/installer/MacLauncher.app`.
+- Verified refreshed installed app signature with `codesign --verify --deep --strict --verbose=2`.
+- Ran refreshed installed app executable smoke for 5 seconds: exits 0 after test kill.
+- Hardened launch-exit behavior after reports that some app clicks can still leave MacLauncher running.
+- Changed the app-layer launch success handler to call `NSApp.terminate(nil)` and then force-exit after `350ms` if AppKit does not terminate promptly.
+- Shortened the `NSWorkspaceLaunchService` delayed completion fallback from `1s` to `350ms`.
+- Updated `PLAN.md` with the force-exit fallback behavior.
+- Re-ran `git diff --check` after launch-exit hardening: exits 0.
+- Re-ran `swift build` after launch-exit hardening: exits 0.
+- Re-ran `swift test` after launch-exit hardening: exits 0.
+- Ran `swift run MacLauncher` after launch-exit hardening for 5 seconds: exits 0 after test kill.
+- Rebuilt package with `VERSION=0.0.1 scripts/build-installer.sh`: exits 0.
+- Latest package SHA-256 after launch-exit hardening: `0decdb0fe6f663e6f643fa0ad61b351e5de985d87b3ca06a7bf75f4050755f65`.
+- Updated local `/Applications/MacLauncher.app` from `.build/installer/MacLauncher.app`.
+- Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
+- Ran installed app executable smoke for 5 seconds after launch-exit hardening: exits 0 after test kill.
+- Removed the group panel `onChange(of: group?.name)` watcher because it mutates `nameDraft` from a derived observed-object value and can trigger SwiftUI `AttributeGraph` cycle warnings.
+- Group rename still synchronizes `nameDraft` on panel appear and immediately after an explicit rename action.
+- Updated `PLAN.md` with the group panel state-cycle mitigation.
+- Re-ran `git diff --check` after AttributeGraph cycle mitigation: exits 0.
+- Re-ran `swift build` after AttributeGraph cycle mitigation: exits 0.
+- Re-ran `swift test` after AttributeGraph cycle mitigation: exits 0.
+- Ran `swift run MacLauncher` after AttributeGraph cycle mitigation for 5 seconds: exits 0 after test kill.
+- Rebuilt package with `VERSION=0.0.1 scripts/build-installer.sh`: exits 0.
+- Latest package SHA-256 after AttributeGraph cycle mitigation: `2c34cf744d898198f0b8343b73a81b1c10e72f12faae612fb2170745f162835a`.
+- Updated local `/Applications/MacLauncher.app` from `.build/installer/MacLauncher.app`.
+- Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
+- Ran installed app executable smoke for 5 seconds after AttributeGraph cycle mitigation: exits 0 after test kill.
+- Fixed focus loss after opening and closing a group panel.
+- Centralized group-panel close handling so Escape, Close button, and sheet dismissal all pass through the same focus recovery.
+- After a group panel closes, MacLauncher re-activates the launcher window, clears stale first responder state, and restores focus to the search field after a short sheet-dismissal delay.
+- Updated `PLAN.md` with group-close search focus restoration.
+- Re-ran `git diff --check` after group-close focus fix: exits 0.
+- Re-ran `swift build` after group-close focus fix: exits 0.
+- Re-ran `swift test` after group-close focus fix: exits 0.
+- Ran `swift run MacLauncher` after group-close focus fix for 5 seconds: exits 0 after test kill.
+- Rebuilt package with `VERSION=0.0.1 scripts/build-installer.sh`: exits 0.
+- Latest package SHA-256 after group-close focus fix: `57e00caf85175e1e0bd59ecab28617ed65311afa3b877545641e4b0f0829449c`.
+- Updated local `/Applications/MacLauncher.app` from `.build/installer/MacLauncher.app`.
+- Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
+- Ran installed app executable smoke for 5 seconds after group-close focus fix: exits 0 after test kill.
+- Replaced the AppKit/SwiftUI sheet group panel with an in-window modal overlay to avoid sheet dismissal focus traps on the custom borderless launcher window.
+- Disabled `LauncherKeyboardMonitor` while the group panel is open so Enter/arrow key events are not swallowed from group panel text fields.
+- Group close now restores focus from within the same launcher window instead of crossing AppKit sheet windows.
+- Updated `PLAN.md` to describe the in-window group panel and temporary keyboard monitor disable.
+- Re-ran `git diff --check` after replacing the group sheet: exits 0.
+- Re-ran `swift build` after replacing the group sheet: exits 0.
+- Re-ran `swift test` after replacing the group sheet: exits 0.
+- Ran `swift run MacLauncher` after replacing the group sheet for 5 seconds: exits 0 after test kill.
+- Rebuilt package with `VERSION=0.0.1 scripts/build-installer.sh`: exits 0.
+- Latest package SHA-256 after replacing the group sheet: `4954c847761c668cef70daa45c9929970245bdca9e0037129d6a20521c2193d9`.
+- Updated local `/Applications/MacLauncher.app` from `.build/installer/MacLauncher.app`.
+- Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
+- Ran installed app executable smoke for 5 seconds after replacing the group sheet: exits 0 after test kill.
 
 ## Next steps
 
-1. Create PR from `codex/fixed-launcher-window` when ready.
+1. Create PR from `codex/phase5-groups` when ready.

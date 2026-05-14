@@ -21,7 +21,7 @@ struct MacLauncherApp: App {
                 launchService: container.launchService,
                 layoutStore: container.layoutStore,
                 onSuccessfulLaunch: {
-                    NSApp.terminate(nil)
+                    LauncherAppDelegate.terminateAfterSuccessfulLaunch()
                 }
             )
         )

@@ -17,7 +17,7 @@ public final class NSWorkspaceLaunchService: AppLaunchService {
 
     public init(
         workspace: NSWorkspace = .shared,
-        delayedCompletionGracePeriodNanoseconds: UInt64 = 1_000_000_000
+        delayedCompletionGracePeriodNanoseconds: UInt64 = 350_000_000
     ) {
         self.workspace = workspace
         self.delayedCompletionGracePeriodNanoseconds = delayedCompletionGracePeriodNanoseconds
