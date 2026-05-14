@@ -4,6 +4,7 @@ import Foundation
 @MainActor
 public final class HomeViewModel: ObservableObject {
     @Published public private(set) var apps: [AppItem] = []
+    @Published public private(set) var groups: [AppGroup] = []
     @Published public private(set) var selectedAppID: AppItem.ID?
     @Published public private(set) var hiddenAppCount = 0
     @Published public private(set) var isLoading = false
@@ -32,6 +33,24 @@ public final class HomeViewModel: ObservableObject {
             return nil
         }
         return apps.first { $0.id == selectedAppID }
+    }
+
+    public func group(for groupID: AppGroup.ID) -> AppGroup? {
+        groups.first { $0.id == groupID }
+    }
+
+    public func apps(inGroupID groupID: AppGroup.ID) -> [AppItem] {
+        guard let group = group(for: groupID) else {
+            return []
+        }
+
+        let appsByID = Dictionary(uniqueKeysWithValues: discoveredApps.map { ($0.id, $0) })
+        return group.appIDs.compactMap { appID in
+            guard layout.hiddenAppIDs.contains(appID) == false else {
+                return nil
+            }
+            return appsByID[appID]
+        }
     }
 
     public init(
@@ -83,6 +102,90 @@ public final class HomeViewModel: ObservableObject {
 
     public func hideApp(_ app: AppItem) {
         layout.hiddenAppIDs.insert(app.id)
+        removeAppIDFromGroups(app.id)
+        saveLayout()
+        applyLayoutAndSearch()
+    }
+
+    @discardableResult
+    public func createGroupFromSelectedApp() -> AppGroup? {
+        guard let selectedApp else {
+            return nil
+        }
+        return createGroup(containing: selectedApp)
+    }
+
+    @discardableResult
+    public func createGroup(containing app: AppItem) -> AppGroup {
+        let groupName = uniqueGroupName(basedOn: "New Group")
+        let group = AppGroup(name: groupName, appIDs: [app.id])
+
+        removeAppIDFromGroups(app.id)
+        layout.groups.append(group)
+        saveLayout()
+        applyLayoutAndSearch()
+        return group
+    }
+
+    public func moveSelectedAppToGroup(groupID: AppGroup.ID) {
+        guard let selectedApp else {
+            return
+        }
+        moveApp(selectedApp, toGroup: groupID)
+    }
+
+    public func moveApp(_ app: AppItem, toGroup groupID: AppGroup.ID) {
+        moveApp(appID: app.id, toGroup: groupID)
+    }
+
+    public func moveApp(appID: AppItem.ID, toGroup groupID: AppGroup.ID) {
+        guard let groupIndex = layout.groups.firstIndex(where: { $0.id == groupID }) else {
+            return
+        }
+        guard discoveredApps.contains(where: { $0.id == appID }),
+              layout.hiddenAppIDs.contains(appID) == false
+        else {
+            return
+        }
+
+        removeAppIDFromGroups(appID)
+        layout.groups[groupIndex].appIDs.append(appID)
+        layout.groups[groupIndex].appIDs = uniqueAppIDs(layout.groups[groupIndex].appIDs)
+        saveLayout()
+        applyLayoutAndSearch()
+    }
+
+    public func removeAppFromGroup(appID: AppItem.ID, groupID: AppGroup.ID) {
+        guard let groupIndex = layout.groups.firstIndex(where: { $0.id == groupID }) else {
+            return
+        }
+
+        layout.groups[groupIndex].appIDs.removeAll { $0 == appID }
+        saveLayout()
+        applyLayoutAndSearch()
+        selectedAppID = appID
+    }
+
+    public func renameGroup(groupID: AppGroup.ID, name: String) {
+        guard let groupIndex = layout.groups.firstIndex(where: { $0.id == groupID }) else {
+            return
+        }
+
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmedName.isEmpty == false else {
+            return
+        }
+
+        layout.groups[groupIndex].name = uniqueGroupName(
+            basedOn: trimmedName,
+            excluding: groupID
+        )
+        saveLayout()
+        applyLayoutAndSearch()
+    }
+
+    public func deleteGroup(groupID: AppGroup.ID) {
+        layout.groups.removeAll { $0.id == groupID }
         saveLayout()
         applyLayoutAndSearch()
     }
@@ -184,6 +287,16 @@ public final class HomeViewModel: ObservableObject {
     }
 
     @discardableResult
+    public func launchApp(appID: AppItem.ID, fromGroupID groupID: AppGroup.ID) -> Task<Void, Never>? {
+        guard apps(inGroupID: groupID).contains(where: { $0.id == appID }),
+              let app = discoveredApps.first(where: { $0.id == appID })
+        else {
+            return nil
+        }
+        return launch(app)
+    }
+
+    @discardableResult
     public func launch(_ app: AppItem) -> Task<Void, Never> {
         Task {
             do {
@@ -248,8 +361,15 @@ public final class HomeViewModel: ObservableObject {
             saveLayout()
         }
 
-        visibleApps = allOrderedApps.filter { layout.hiddenAppIDs.contains($0.id) == false }
-        hiddenAppCount = allOrderedApps.count - visibleApps.count
+        normalizeGroups(availableAppIDs: Set(allOrderedApps.map(\.id)))
+        groups = layout.groups
+
+        let groupedAppIDs = Set(layout.groups.flatMap(\.appIDs))
+        visibleApps = allOrderedApps.filter { app in
+            layout.hiddenAppIDs.contains(app.id) == false
+                && groupedAppIDs.contains(app.id) == false
+        }
+        hiddenAppCount = allOrderedApps.filter { layout.hiddenAppIDs.contains($0.id) }.count
         applySearch()
     }
 
@@ -272,5 +392,58 @@ public final class HomeViewModel: ObservableObject {
         }
 
         selectedAppID = apps[0].id
+    }
+
+    private func removeAppIDFromGroups(_ appID: AppItem.ID) {
+        for groupIndex in layout.groups.indices {
+            layout.groups[groupIndex].appIDs.removeAll { $0 == appID }
+        }
+    }
+
+    private func normalizeGroups(availableAppIDs: Set<AppItem.ID>) {
+        var didChange = false
+
+        for groupIndex in layout.groups.indices {
+            let normalizedAppIDs = uniqueAppIDs(
+                layout.groups[groupIndex].appIDs.filter { availableAppIDs.contains($0) }
+            )
+
+            if normalizedAppIDs != layout.groups[groupIndex].appIDs {
+                layout.groups[groupIndex].appIDs = normalizedAppIDs
+                didChange = true
+            }
+        }
+
+        if didChange {
+            saveLayout()
+        }
+    }
+
+    private func uniqueAppIDs(_ appIDs: [AppItem.ID]) -> [AppItem.ID] {
+        var seenAppIDs = Set<AppItem.ID>()
+        return appIDs.filter { seenAppIDs.insert($0).inserted }
+    }
+
+    private func uniqueGroupName(
+        basedOn baseName: String,
+        excluding excludedGroupID: AppGroup.ID? = nil
+    ) -> String {
+        let trimmedBaseName = baseName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let baseName = trimmedBaseName.isEmpty ? "New Group" : trimmedBaseName
+        let existingNames = Set(
+            layout.groups.compactMap { group in
+                group.id == excludedGroupID ? nil : group.name
+            }
+        )
+
+        guard existingNames.contains(baseName) else {
+            return baseName
+        }
+
+        var suffix = 2
+        while existingNames.contains("\(baseName) \(suffix)") {
+            suffix += 1
+        }
+        return "\(baseName) \(suffix)"
     }
 }

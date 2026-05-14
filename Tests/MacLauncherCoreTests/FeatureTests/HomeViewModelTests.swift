@@ -83,6 +83,156 @@ struct HomeViewModelTests {
     }
 
     @Test
+    func createGroupFromSelectedAppPersistsGroupAndRemovesAppFromGrid() throws {
+        let apps = [
+            makeApp(id: "com.example.one", name: "One"),
+            makeApp(id: "com.example.two", name: "Two"),
+            makeApp(id: "com.example.three", name: "Three")
+        ]
+        let store = StubLayoutStore()
+        let viewModel = HomeViewModel(
+            catalogService: StubCatalogService(apps: apps),
+            launchService: StubLaunchService(),
+            layoutStore: store
+        )
+
+        viewModel.refresh()
+        viewModel.moveSelection(by: 1)
+        let group = try #require(viewModel.createGroupFromSelectedApp())
+
+        #expect(group.name == "New Group")
+        #expect(viewModel.groups == [group])
+        #expect(viewModel.apps == [apps[0], apps[2]])
+        #expect(viewModel.apps(inGroupID: group.id) == [apps[1]])
+        #expect(store.savedLayouts.last?.groups == [group])
+    }
+
+    @Test
+    func moveAppIntoAndOutOfGroupPersistsMembership() throws {
+        let apps = [
+            makeApp(id: "com.example.one", name: "One"),
+            makeApp(id: "com.example.two", name: "Two"),
+            makeApp(id: "com.example.three", name: "Three")
+        ]
+        let store = StubLayoutStore()
+        let viewModel = HomeViewModel(
+            catalogService: StubCatalogService(apps: apps),
+            launchService: StubLaunchService(),
+            layoutStore: store
+        )
+
+        viewModel.refresh()
+        let group = viewModel.createGroup(containing: apps[0])
+        viewModel.moveApp(apps[2], toGroup: group.id)
+
+        #expect(viewModel.apps == [apps[1]])
+        #expect(viewModel.apps(inGroupID: group.id) == [apps[0], apps[2]])
+        #expect(store.savedLayouts.last?.groups.first?.appIDs == [apps[0].id, apps[2].id])
+
+        viewModel.removeAppFromGroup(appID: apps[0].id, groupID: group.id)
+
+        #expect(viewModel.apps == [apps[0], apps[1]])
+        #expect(viewModel.apps(inGroupID: group.id) == [apps[2]])
+        #expect(store.savedLayouts.last?.groups.first?.appIDs == [apps[2].id])
+    }
+
+    @Test
+    func moveAppIDToGroupSupportsDropWithoutOpeningGroup() {
+        let apps = [
+            makeApp(id: "com.example.one", name: "One"),
+            makeApp(id: "com.example.two", name: "Two")
+        ]
+        let store = StubLayoutStore()
+        let viewModel = HomeViewModel(
+            catalogService: StubCatalogService(apps: apps),
+            launchService: StubLaunchService(),
+            layoutStore: store
+        )
+
+        viewModel.refresh()
+        let group = viewModel.createGroup(containing: apps[0])
+        viewModel.moveApp(appID: apps[1].id, toGroup: group.id)
+
+        #expect(viewModel.apps.isEmpty)
+        #expect(viewModel.apps(inGroupID: group.id) == apps)
+        #expect(store.savedLayouts.last?.groups.first?.appIDs == apps.map(\.id))
+    }
+
+    @Test
+    func renameGroupPersistsTrimmedUniqueName() throws {
+        let apps = [
+            makeApp(id: "com.example.one", name: "One"),
+            makeApp(id: "com.example.two", name: "Two")
+        ]
+        let store = StubLayoutStore()
+        let viewModel = HomeViewModel(
+            catalogService: StubCatalogService(apps: apps),
+            launchService: StubLaunchService(),
+            layoutStore: store
+        )
+
+        viewModel.refresh()
+        let firstGroup = viewModel.createGroup(containing: apps[0])
+        _ = viewModel.createGroup(containing: apps[1])
+        viewModel.renameGroup(groupID: firstGroup.id, name: "  New Group 2  ")
+
+        #expect(viewModel.group(for: firstGroup.id)?.name == "New Group 2 2")
+        #expect(store.savedLayouts.last?.groups.first?.name == "New Group 2 2")
+    }
+
+    @Test
+    func deleteGroupRestoresGroupedAppsToGrid() {
+        let apps = [
+            makeApp(id: "com.example.one", name: "One"),
+            makeApp(id: "com.example.two", name: "Two")
+        ]
+        let store = StubLayoutStore()
+        let viewModel = HomeViewModel(
+            catalogService: StubCatalogService(apps: apps),
+            launchService: StubLaunchService(),
+            layoutStore: store
+        )
+
+        viewModel.refresh()
+        let group = viewModel.createGroup(containing: apps[0])
+        viewModel.deleteGroup(groupID: group.id)
+
+        #expect(viewModel.groups.isEmpty)
+        #expect(viewModel.apps == apps)
+        #expect(store.savedLayouts.last?.groups.isEmpty == true)
+    }
+
+    @Test
+    func refreshAppliesPersistedGroups() throws {
+        let apps = [
+            makeApp(id: "com.example.one", name: "One"),
+            makeApp(id: "com.example.two", name: "Two"),
+            makeApp(id: "com.example.three", name: "Three")
+        ]
+        let group = AppGroup(
+            id: try #require(UUID(uuidString: "C19F3EEA-E1BC-47AB-9298-714B499217A1")),
+            name: "Work",
+            appIDs: [apps[1].id]
+        )
+        let viewModel = HomeViewModel(
+            catalogService: StubCatalogService(apps: apps),
+            launchService: StubLaunchService(),
+            layoutStore: StubLayoutStore(
+                layoutToLoad: LauncherLayout(
+                    orderedAppIDs: apps.map(\.id),
+                    groups: [group]
+                )
+            )
+        )
+
+        viewModel.refresh()
+
+        #expect(viewModel.groups == [group])
+        #expect(viewModel.apps == [apps[0], apps[2]])
+        #expect(viewModel.apps(inGroupID: group.id) == [apps[1]])
+    }
+
+    @Test
     func moveAppInLayoutPersistsCustomOrder() {
         let apps = [
             makeApp(id: "com.example.one", name: "One"),
@@ -489,6 +639,31 @@ struct HomeViewModelTests {
         }
 
         #expect(viewModel.selectedAppID == apps[1].id)
+        #expect(didRunSuccessHandler)
+        #expect(viewModel.errorMessage == nil)
+    }
+
+    @Test
+    func launchGroupedAppRunsSuccessHandler() async {
+        let apps = [
+            makeApp(id: "com.example.one", name: "One"),
+            makeApp(id: "com.example.two", name: "Two")
+        ]
+        var didRunSuccessHandler = false
+        let viewModel = HomeViewModel(
+            catalogService: StubCatalogService(apps: apps),
+            launchService: StubLaunchService(),
+            onSuccessfulLaunch: {
+                didRunSuccessHandler = true
+            }
+        )
+
+        viewModel.refresh()
+        let group = viewModel.createGroup(containing: apps[1])
+        if let task = viewModel.launchApp(appID: apps[1].id, fromGroupID: group.id) {
+            await task.value
+        }
+
         #expect(didRunSuccessHandler)
         #expect(viewModel.errorMessage == nil)
     }

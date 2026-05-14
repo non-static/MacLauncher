@@ -3,10 +3,13 @@ import UniformTypeIdentifiers
 
 public struct AppGridView: View {
     private let apps: [AppItem]
+    private let groups: [AppGroup]
     private let iconLoader: any AppIconLoading
     private let selectedAppID: AppItem.ID?
     private let onLaunch: (AppItem) -> Void
     private let onHide: (AppItem) -> Void
+    private let onCreateGroup: (AppItem) -> Void
+    private let onMoveToGroup: (AppItem, AppGroup.ID) -> Void
     private let onMoveInLayout: (AppItem, Int) -> Void
     private let onReorder: (AppItem.ID, Int) -> Bool
     private let onColumnCountChange: (Int) -> Void
@@ -26,19 +29,25 @@ public struct AppGridView: View {
 
     public init(
         apps: [AppItem],
+        groups: [AppGroup] = [],
         iconLoader: any AppIconLoading,
         selectedAppID: AppItem.ID? = nil,
         onLaunch: @escaping (AppItem) -> Void,
         onHide: @escaping (AppItem) -> Void = { _ in },
+        onCreateGroup: @escaping (AppItem) -> Void = { _ in },
+        onMoveToGroup: @escaping (AppItem, AppGroup.ID) -> Void = { _, _ in },
         onMoveInLayout: @escaping (AppItem, Int) -> Void = { _, _ in },
         onReorder: @escaping (AppItem.ID, Int) -> Bool = { _, _ in false },
         onColumnCountChange: @escaping (Int) -> Void = { _ in }
     ) {
         self.apps = apps
+        self.groups = groups
         self.iconLoader = iconLoader
         self.selectedAppID = selectedAppID
         self.onLaunch = onLaunch
         self.onHide = onHide
+        self.onCreateGroup = onCreateGroup
+        self.onMoveToGroup = onMoveToGroup
         self.onMoveInLayout = onMoveInLayout
         self.onReorder = onReorder
         self.onColumnCountChange = onColumnCountChange
@@ -80,6 +89,22 @@ public struct AppGridView: View {
 
                                     Button("Hide App") {
                                         onHide(app)
+                                    }
+
+                                    Divider()
+
+                                    Button("New Group from App") {
+                                        onCreateGroup(app)
+                                    }
+
+                                    if groups.isEmpty == false {
+                                        Menu("Move to Group") {
+                                            ForEach(groups) { group in
+                                                Button(group.name) {
+                                                    onMoveToGroup(app, group.id)
+                                                }
+                                            }
+                                        }
                                     }
                                 }
 

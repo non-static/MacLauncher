@@ -250,6 +250,7 @@ This is the first true vertical slice. Keep it brutally small.
 - Clicking an app launches it.
 - MacLauncher exits after a successful app launch.
 - MacLauncher still exits after an accepted launch request if `NSWorkspace` delays its completion callback.
+- App-layer termination has a short force-exit fallback so launch clicks cannot leave MacLauncher running after success.
 - Failed launches leave MacLauncher open and show an error.
 - Refresh updates the grid.
 - No crashes if an app has missing metadata.
@@ -410,6 +411,23 @@ Do **not** mimic old Launchpad folder animations at first. Use a simple, clean g
 - Group contents are editable.
 - Group survives relaunch.
 - Launching apps inside a group works.
+
+### Implemented in this Phase 5 pass
+- Group shelf appears above the main app grid when groups exist.
+- Users can create a group from the selected app or from an app context menu.
+- Users can move selected apps or individual app context-menu targets into existing groups.
+- Users can drag an app tile onto a group shelf item to move it into that group.
+- Opening a group shows a simple in-window modal panel with a nested app grid.
+- Pressing Escape closes an open group panel before falling back to search clear or app quit.
+- Closing a group panel restores keyboard focus to the launcher search field.
+- Global app-grid keyboard navigation is disabled while the group panel is open so panel text fields receive key input normally.
+- Clicking an app inside a group launches it through the same success path as the main grid, so MacLauncher exits after successful launch.
+- Users can rename groups, remove apps from groups, and delete groups.
+- Moving an app into a group does not automatically open that group.
+- Group panel rename state is synchronized explicitly to avoid SwiftUI derived-state update cycles.
+- Grouped apps are removed from the main ungrouped grid and return when removed from or deleted with the group.
+- Group state persists through `LauncherLayout.groups`.
+- Unit tests cover group creation, persisted groups, rename, delete, and moving apps into and out of groups.
 
 ---
 
