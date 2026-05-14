@@ -75,6 +75,7 @@ Completed vertical slice:
 - runtime app icon when launched through `swift run`
 - background transparency setting, defaulting to 30%
 - bottom-right version label with a GitHub repository link
+- fixed-size launcher window with rounded corners, no titlebar, no close/minimize/zoom traffic-light buttons, and no menu sizing commands
 
 ## Settings
 

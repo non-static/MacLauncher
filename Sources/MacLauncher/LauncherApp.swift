@@ -35,9 +35,12 @@ struct MacLauncherApp: App {
                 backgroundTransparencyPercent: backgroundTransparencyPercent,
                 appDelegate: appDelegate
             )
-            .frame(minWidth: 720, minHeight: 520)
+            .frame(width: 860, height: 620)
             .background(WindowTransparencyConfigurator())
         }
+        .windowStyle(.hiddenTitleBar)
+        .windowResizability(.contentSize)
+
         Settings {
             SettingsView(
                 backgroundTransparencyPercent: $backgroundTransparencyPercent
@@ -52,6 +55,8 @@ struct MacLauncherApp: App {
                 }
                 .keyboardShortcut("r", modifiers: [.command])
             }
+            CommandGroup(replacing: .windowArrangement) {}
+            CommandGroup(replacing: .windowSize) {}
         }
     }
 }
