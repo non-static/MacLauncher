@@ -41,11 +41,12 @@ scripts/build-installer.sh
 ```
 
 The script builds a release binary, wraps it in `MacLauncher.app`, ad-hoc signs the app, and writes an installer package to `.build/installer/MacLauncher-0.0.1.pkg`.
-The packaged app includes the app icon from `Sources/MacLauncher/Resources/AppIcon.icns`.
+The packaged app includes the app icon from `Sources/MacLauncher/Resources/AppIcon.icns` and embeds the current git commit in `Info.plist`.
 
 Optional environment variables:
 
 - `VERSION=0.2.0`
+- `GIT_COMMIT=$(git rev-parse HEAD)`
 - `BUILD_CONFIG=debug`
 - `BUNDLE_ID=com.example.MacLauncher`
 - `CODE_SIGN_IDENTITY="Developer ID Application: Example"`
@@ -74,7 +75,7 @@ Completed vertical slice:
 - modern app logo and packaged `.icns` app icon
 - runtime app icon when launched through `swift run`
 - background transparency setting, defaulting to 30%
-- bottom-right version label with a GitHub repository link
+- bottom-right version and commit labels with GitHub repository and commit links
 - fixed-size launcher window with rounded corners, no titlebar, no close/minimize/zoom traffic-light buttons, and no menu sizing commands
 - custom groups with a group shelf, drag/drop into groups, nested group panel, rename, delete, and move in/out support
 
