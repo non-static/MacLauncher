@@ -40,7 +40,7 @@ Build a local macOS installer package:
 scripts/build-installer.sh
 ```
 
-The script builds a release binary, wraps it in `MacLauncher.app`, ad-hoc signs the app, and writes an installer package to `.build/installer/MacLauncher-0.0.1.pkg`.
+The script builds a release binary, wraps it in `MacLauncher.app`, ad-hoc signs the app, and writes an installer package to `.build/installer/MacLauncher-0.0.2.pkg`.
 The packaged app includes the app icon from `Sources/MacLauncher/Resources/AppIcon.icns` and embeds the current git commit in `Info.plist`.
 
 Optional environment variables:
@@ -57,7 +57,7 @@ Optional environment variables:
 Install the generated package with Finder or:
 
 ```sh
-sudo installer -pkg .build/installer/MacLauncher-0.0.1.pkg -target /
+sudo installer -pkg .build/installer/MacLauncher-0.0.2.pkg -target /
 ```
 
 ## Current scope

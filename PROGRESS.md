@@ -574,9 +574,18 @@ Reason:
 - Rebuilt package with `VERSION=0.0.1 scripts/build-installer.sh`: exits 0.
 - Verified `.build/installer/MacLauncher.app/Contents/Info.plist` includes `MacLauncherGitCommit`.
 - Ran `swift run MacLauncher` after adding the commit footer for 5 seconds: exits 0 after test kill.
+- Created branch `codex/release-0.0.2`.
+- Bumped the app fallback version and installer default version from `0.0.1` to `0.0.2`.
+- Updated README installer paths to `MacLauncher-0.0.2.pkg`.
+- Updated `PLAN.md` to identify `0.0.2` as the current manual release package target.
+- Ran `swift test` after the `0.0.2` version bump: exits 0.
+- Ran `git diff --check` after the `0.0.2` version bump: exits 0.
+- Ran `swift build` after the `0.0.2` version bump: exits 0.
+- Ran `scripts/build-installer.sh` after the `0.0.2` version bump: exits 0 and wrote `.build/installer/MacLauncher-0.0.2.pkg`.
+- Verified packaged `CFBundleShortVersionString` and `CFBundleVersion` are `0.0.2`.
+- Ran `swift run MacLauncher` after the `0.0.2` version bump for 5 seconds: exits 0 after test kill.
 
 ## Next steps
 
-1. Review the version/commit footer diff on `codex/ui-commit-link`.
-2. If desired, build installer and refresh local `/Applications/MacLauncher.app`.
-3. Create a PR when ready.
+1. Create PR from `codex/release-0.0.2`.
+2. After merge, switch to `main`, pull latest, build `VERSION=0.0.2 scripts/build-installer.sh`, write `.sha256`, and publish GitHub release `v0.0.2`.
