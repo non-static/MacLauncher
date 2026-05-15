@@ -551,7 +551,7 @@ A realistic app you can distribute or use daily.
 
 ### Already covered in Phase 1
 - Local `.pkg` installer package.
-- Manual GitHub release package for version `0.0.1`.
+- Manual GitHub release package for version `0.0.2`.
 - App icon and logo assets.
 - Runtime app icon for `swift run`.
 - Escape-to-quit behavior.

@@ -656,7 +656,7 @@ private struct GroupPanelView: View {
 
 private enum LauncherMetadata {
     static let githubURL = URL(string: "https://github.com/non-static/MacLauncher")!
-    private static let fallbackVersion = "0.0.1"
+    private static let fallbackVersion = "0.0.2"
     private static let commitInfoKey = "MacLauncherGitCommit"
     private static let resolvedCommitID = resolveCommitID()
 
