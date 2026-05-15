@@ -584,8 +584,25 @@ Reason:
 - Ran `scripts/build-installer.sh` after the `0.0.2` version bump: exits 0 and wrote `.build/installer/MacLauncher-0.0.2.pkg`.
 - Verified packaged `CFBundleShortVersionString` and `CFBundleVersion` are `0.0.2`.
 - Ran `swift run MacLauncher` after the `0.0.2` version bump for 5 seconds: exits 0 after test kill.
+- Created branch `codex/perf-load-time`.
+- Added persistent catalog caching through `AppCatalogSnapshot`, `CatalogCacheStore`, and `JSONCatalogCacheStore`.
+- `HomeViewModel.refresh()` now shows cached apps immediately when available, then refreshes the catalog in the background.
+- Added `HomeViewModel.loadTimeMilliseconds` to record perceived load time from refresh start to first displayed app list.
+- Added a persisted Settings toggle `displayLoadTimeInMilliseconds`.
+- When enabled, the launcher footer displays load time in milliseconds at the bottom-left corner.
+- App icons now show a placeholder first and load real icons asynchronously off the main actor.
+- Catalog scanning now skips package descendants and prefetches URL resource keys.
+- Added Points of Interest signposts around cache load/save, catalog refresh/scan, and icon cache misses.
+- Added tests for cached-app immediate display and JSON catalog cache persistence.
+- Updated `PLAN.md` and `README.md` with the load-time display and performance cache behavior.
+- Ran `swift test` after the performance/load-time pass: exits 0.
+- Ran `git diff --check` after the performance/load-time pass: exits 0.
+- Ran `swift build` after the performance/load-time pass: exits 0.
+- Rebuilt package with `VERSION=0.0.2 scripts/build-installer.sh`: exits 0.
+- Verified packaged `CFBundleShortVersionString` is `0.0.2` and code signature passes.
+- Ran `swift run MacLauncher` after the performance/load-time pass for 5 seconds: exits 0 after test kill.
 
 ## Next steps
 
-1. Create PR from `codex/release-0.0.2`.
-2. After merge, switch to `main`, pull latest, build `VERSION=0.0.2 scripts/build-installer.sh`, write `.sha256`, and publish GitHub release `v0.0.2`.
+1. Review the performance/load-time diff on `codex/perf-load-time`.
+2. Create a PR when ready.

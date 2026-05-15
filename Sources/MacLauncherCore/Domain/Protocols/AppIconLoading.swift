@@ -1,5 +1,5 @@
 import AppKit
 
-public protocol AppIconLoading {
+public protocol AppIconLoading: Sendable {
     func icon(for app: AppItem) -> NSImage
 }

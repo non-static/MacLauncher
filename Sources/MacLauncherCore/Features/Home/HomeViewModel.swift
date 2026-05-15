@@ -8,6 +8,7 @@ public final class HomeViewModel: ObservableObject {
     @Published public private(set) var selectedAppID: AppItem.ID?
     @Published public private(set) var hiddenAppCount = 0
     @Published public private(set) var isLoading = false
+    @Published public private(set) var loadTimeMilliseconds: Int?
     @Published public var searchQuery = "" {
         didSet {
             applySearch()
@@ -18,6 +19,7 @@ public final class HomeViewModel: ObservableObject {
     private let catalogService: any AppCatalogService
     private let launchService: any AppLaunchService
     private let layoutStore: (any LayoutStore)?
+    private let catalogCacheStore: (any CatalogCacheStore)?
     private let onSuccessfulLaunch: @MainActor () -> Void
     private var discoveredApps: [AppItem] = []
     private var visibleApps: [AppItem] = []
@@ -60,11 +62,13 @@ public final class HomeViewModel: ObservableObject {
         catalogService: any AppCatalogService,
         launchService: any AppLaunchService,
         layoutStore: (any LayoutStore)? = nil,
+        catalogCacheStore: (any CatalogCacheStore)? = nil,
         onSuccessfulLaunch: @escaping @MainActor () -> Void = {}
     ) {
         self.catalogService = catalogService
         self.launchService = launchService
         self.layoutStore = layoutStore
+        self.catalogCacheStore = catalogCacheStore
         self.onSuccessfulLaunch = onSuccessfulLaunch
     }
 
@@ -74,8 +78,10 @@ public final class HomeViewModel: ObservableObject {
         refreshGeneration += 1
         let generation = refreshGeneration
         let catalogService = catalogService
+        let loadStart = ContinuousClock.now
 
         loadLayoutIfNeeded()
+        loadCachedCatalogIfAvailable(loadStart: loadStart)
         isLoading = true
 
         let task = Task { [weak self, catalogService] in
@@ -85,7 +91,8 @@ public final class HomeViewModel: ObservableObject {
 
             await self.performRefresh(
                 using: catalogService,
-                generation: generation
+                generation: generation,
+                loadStart: loadStart
             )
         }
         refreshTask = task
@@ -339,13 +346,19 @@ public final class HomeViewModel: ObservableObject {
 
     private func performRefresh(
         using catalogService: any AppCatalogService,
-        generation: Int
+        generation: Int,
+        loadStart: ContinuousClock.Instant
     ) async {
         defer {
             completeRefresh(generation: generation)
         }
 
         do {
+            let refreshSignpostID = LauncherPerformanceSignposts.begin("Catalog Refresh")
+            defer {
+                LauncherPerformanceSignposts.end("Catalog Refresh", refreshSignpostID)
+            }
+
             let scannedApps = try await Self.scanInstalledApps(using: catalogService)
             guard generation == refreshGeneration, Task.isCancelled == false else {
                 return
@@ -353,6 +366,10 @@ public final class HomeViewModel: ObservableObject {
 
             discoveredApps = scannedApps
             applyLayoutAndSearch()
+            saveCatalogCache(apps: scannedApps)
+            if loadTimeMilliseconds == nil {
+                recordLoadTime(from: loadStart)
+            }
             errorMessage = nil
         } catch is CancellationError {
             return
@@ -388,6 +405,61 @@ public final class HomeViewModel: ObservableObject {
 
         isLoading = false
         refreshTask = nil
+    }
+
+    private func loadCachedCatalogIfAvailable(
+        loadStart: ContinuousClock.Instant
+    ) {
+        guard discoveredApps.isEmpty,
+              let catalogCacheStore
+        else {
+            loadTimeMilliseconds = nil
+            return
+        }
+
+        let cacheSignpostID = LauncherPerformanceSignposts.begin("Catalog Cache Load")
+        defer {
+            LauncherPerformanceSignposts.end("Catalog Cache Load", cacheSignpostID)
+        }
+
+        do {
+            guard let snapshot = try catalogCacheStore.loadCatalogSnapshot(),
+                  snapshot.apps.isEmpty == false
+            else {
+                loadTimeMilliseconds = nil
+                return
+            }
+
+            discoveredApps = snapshot.apps
+            applyLayoutAndSearch()
+            recordLoadTime(from: loadStart)
+            errorMessage = nil
+        } catch {
+            loadTimeMilliseconds = nil
+        }
+    }
+
+    private func saveCatalogCache(apps: [AppItem]) {
+        guard let catalogCacheStore else {
+            return
+        }
+
+        let snapshot = AppCatalogSnapshot(apps: apps)
+        Task.detached(priority: .utility) {
+            let cacheSignpostID = LauncherPerformanceSignposts.begin("Catalog Cache Save")
+            defer {
+                LauncherPerformanceSignposts.end("Catalog Cache Save", cacheSignpostID)
+            }
+
+            try? catalogCacheStore.saveCatalogSnapshot(snapshot)
+        }
+    }
+
+    private func recordLoadTime(from loadStart: ContinuousClock.Instant) {
+        let duration = loadStart.duration(to: ContinuousClock.now)
+        let milliseconds = duration.components.seconds * 1_000
+            + duration.components.attoseconds / 1_000_000_000_000_000
+        loadTimeMilliseconds = Int(milliseconds)
     }
 
     private func loadLayoutIfNeeded() {

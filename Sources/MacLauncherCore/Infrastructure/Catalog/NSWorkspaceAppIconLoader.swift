@@ -1,6 +1,6 @@
 import AppKit
 
-public final class NSWorkspaceAppIconLoader: AppIconLoading {
+public final class NSWorkspaceAppIconLoader: AppIconLoading, @unchecked Sendable {
     private let workspace: NSWorkspace
     private let cache = NSCache<NSString, NSImage>()
 
@@ -16,6 +16,11 @@ public final class NSWorkspaceAppIconLoader: AppIconLoading {
         let cacheKey = app.iconCacheKey as NSString
         if let cachedIcon = cache.object(forKey: cacheKey) {
             return cachedIcon
+        }
+
+        let signpostID = LauncherPerformanceSignposts.begin("App Icon Load")
+        defer {
+            LauncherPerformanceSignposts.end("App Icon Load", signpostID)
         }
 
         let icon = workspace.icon(forFile: app.appURL.path)

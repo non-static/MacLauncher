@@ -13,6 +13,7 @@ public struct AppTileView: View {
     private let dropIndicator: AppTileDropIndicator
 
     @State private var isHovered = false
+    @State private var icon: NSImage?
 
     public init(
         app: AppItem,
@@ -28,7 +29,7 @@ public struct AppTileView: View {
 
     public var body: some View {
         VStack(spacing: 8) {
-            Image(nsImage: iconLoader.icon(for: app))
+            Image(nsImage: icon ?? Self.placeholderIcon)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 64, height: 64)
@@ -47,6 +48,9 @@ public struct AppTileView: View {
         .overlay(dropIndicatorView)
         .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .onHover { isHovered = $0 }
+        .task(id: app.iconCacheKey) {
+            await loadIcon()
+        }
         .accessibilityLabel(app.name)
     }
 
@@ -91,5 +95,26 @@ public struct AppTileView: View {
             .frame(width: 4, height: 92)
             .shadow(color: Color.accentColor.opacity(0.45), radius: 4)
             .padding(.horizontal, -6)
+    }
+
+    private func loadIcon() async {
+        let app = app
+        let iconLoader = iconLoader
+        let loadedIcon = await Task.detached(priority: .utility) {
+            iconLoader.icon(for: app)
+        }.value
+
+        guard Task.isCancelled == false else {
+            return
+        }
+
+        icon = loadedIcon
+    }
+
+    private static var placeholderIcon: NSImage {
+        NSImage(
+            systemSymbolName: "app.dashed",
+            accessibilityDescription: nil
+        ) ?? NSImage(size: NSSize(width: 64, height: 64))
     }
 }
