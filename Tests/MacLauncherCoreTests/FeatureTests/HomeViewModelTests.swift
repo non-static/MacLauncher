@@ -42,6 +42,34 @@ struct HomeViewModelTests {
     }
 
     @Test
+    func refreshShowsCachedAppsBeforeScanCompletes() async {
+        let cachedApp = makeApp(id: "com.example.cached", name: "Cached")
+        let scannedApp = makeApp(id: "com.example.scanned", name: "Scanned")
+        let cacheStore = StubCatalogCacheStore(
+            snapshot: AppCatalogSnapshot(apps: [cachedApp])
+        )
+        let viewModel = HomeViewModel(
+            catalogService: StubCatalogService(
+                apps: [scannedApp],
+                delay: 0.04
+            ),
+            launchService: StubLaunchService(),
+            catalogCacheStore: cacheStore
+        )
+
+        let refreshTask = viewModel.refresh()
+
+        #expect(viewModel.apps == [cachedApp])
+        #expect(viewModel.loadTimeMilliseconds != nil)
+        #expect(viewModel.isLoading)
+
+        await refreshTask.value
+
+        #expect(viewModel.apps == [scannedApp])
+        #expect(viewModel.isLoading == false)
+    }
+
+    @Test
     func refreshFailureSetsError() async {
         let viewModel = HomeViewModel(
             catalogService: StubCatalogService(error: StubError.failed),
@@ -752,6 +780,31 @@ private struct StubLaunchService: AppLaunchService {
         if let error {
             throw error
         }
+    }
+}
+
+private final class StubCatalogCacheStore: CatalogCacheStore, @unchecked Sendable {
+    private let lock = NSLock()
+    private var snapshot: AppCatalogSnapshot?
+    private(set) var savedSnapshots: [AppCatalogSnapshot] = []
+
+    init(snapshot: AppCatalogSnapshot? = nil) {
+        self.snapshot = snapshot
+    }
+
+    func loadCatalogSnapshot() throws -> AppCatalogSnapshot? {
+        lock.lock()
+        defer { lock.unlock() }
+
+        return snapshot
+    }
+
+    func saveCatalogSnapshot(_ snapshot: AppCatalogSnapshot) throws {
+        lock.lock()
+        defer { lock.unlock() }
+
+        savedSnapshots.append(snapshot)
+        self.snapshot = snapshot
     }
 }
 

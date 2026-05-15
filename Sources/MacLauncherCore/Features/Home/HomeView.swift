@@ -6,6 +6,7 @@ public struct HomeView: View {
     @ObservedObject private var viewModel: HomeViewModel
     private let iconLoader: any AppIconLoading
     private let backgroundTransparencyPercent: Double
+    private let displayLoadTimeInMilliseconds: Bool
     private let onOpenSettings: () -> Void
     private let onRegisterEscapeHandler: (@escaping @MainActor () -> Bool) -> Void
     private let onUnregisterEscapeHandler: () -> Void
@@ -18,6 +19,7 @@ public struct HomeView: View {
         viewModel: HomeViewModel,
         iconLoader: any AppIconLoading,
         backgroundTransparencyPercent: Double,
+        displayLoadTimeInMilliseconds: Bool,
         onOpenSettings: @escaping () -> Void,
         onRegisterEscapeHandler: @escaping (@escaping @MainActor () -> Bool) -> Void = { _ in },
         onUnregisterEscapeHandler: @escaping () -> Void = {}
@@ -25,6 +27,7 @@ public struct HomeView: View {
         self.viewModel = viewModel
         self.iconLoader = iconLoader
         self.backgroundTransparencyPercent = backgroundTransparencyPercent
+        self.displayLoadTimeInMilliseconds = displayLoadTimeInMilliseconds
         self.onOpenSettings = onOpenSettings
         self.onRegisterEscapeHandler = onRegisterEscapeHandler
         self.onUnregisterEscapeHandler = onUnregisterEscapeHandler
@@ -256,6 +259,14 @@ public struct HomeView: View {
                 .foregroundStyle(.secondary)
 
             HStack {
+                if displayLoadTimeInMilliseconds,
+                   let loadTimeMilliseconds = viewModel.loadTimeMilliseconds
+                {
+                    Text("Load \(loadTimeMilliseconds) ms")
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
+
                 Spacer()
 
                 HStack(spacing: 6) {

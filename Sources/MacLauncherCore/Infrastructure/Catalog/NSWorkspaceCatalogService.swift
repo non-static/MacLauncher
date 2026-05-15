@@ -23,6 +23,11 @@ public final class NSWorkspaceCatalogService: AppCatalogService, @unchecked Send
     }
 
     public func installedApps() throws -> [AppItem] {
+        let signpostID = LauncherPerformanceSignposts.begin("App Catalog Scan")
+        defer {
+            LauncherPerformanceSignposts.end("App Catalog Scan", signpostID)
+        }
+
         var appsByID: [String: AppItem] = [:]
 
         for directory in scanDirectories {
@@ -50,8 +55,13 @@ public final class NSWorkspaceCatalogService: AppCatalogService, @unchecked Send
 
         guard let enumerator = fileManager.enumerator(
             at: directory,
-            includingPropertiesForKeys: [.isDirectoryKey],
-            options: [.skipsHiddenFiles]
+            includingPropertiesForKeys: [
+                .isDirectoryKey,
+                .isPackageKey,
+                .localizedNameKey,
+                .contentModificationDateKey
+            ],
+            options: [.skipsHiddenFiles, .skipsPackageDescendants]
         ) else {
             return []
         }

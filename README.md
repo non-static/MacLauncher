@@ -75,9 +75,11 @@ Completed vertical slice:
 - modern app logo and packaged `.icns` app icon
 - runtime app icon when launched through `swift run`
 - background transparency setting, defaulting to 30%
+- optional bottom-left app load time display in milliseconds
 - bottom-right version and commit labels with GitHub repository and commit links
 - fixed-size launcher window with rounded corners, no titlebar, no close/minimize/zoom traffic-light buttons, and no menu sizing commands
 - custom groups with a group shelf, drag/drop into groups, nested group panel, rename, delete, and move in/out support
+- persistent catalog cache and async icon loading for faster perceived startup
 
 ## Settings
 

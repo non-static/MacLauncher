@@ -2,9 +2,14 @@ import SwiftUI
 
 public struct SettingsView: View {
     @Binding private var backgroundTransparencyPercent: Double
+    @Binding private var displayLoadTimeInMilliseconds: Bool
 
-    public init(backgroundTransparencyPercent: Binding<Double>) {
+    public init(
+        backgroundTransparencyPercent: Binding<Double>,
+        displayLoadTimeInMilliseconds: Binding<Bool>
+    ) {
         self._backgroundTransparencyPercent = backgroundTransparencyPercent
+        self._displayLoadTimeInMilliseconds = displayLoadTimeInMilliseconds
     }
 
     public var body: some View {
@@ -32,6 +37,12 @@ public struct SettingsView: View {
                     }
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                }
+            }
+
+            Section {
+                Toggle(isOn: $displayLoadTimeInMilliseconds) {
+                    Label("Display Load Time", systemImage: "timer")
                 }
             }
         }

@@ -9,6 +9,7 @@ struct MacLauncherApp: App {
     private let container: AppContainer
 
     @AppStorage("backgroundTransparencyPercent") private var backgroundTransparencyPercent = 30.0
+    @AppStorage("displayLoadTimeInMilliseconds") private var displayLoadTimeInMilliseconds = false
 
     @StateObject private var viewModel: HomeViewModel
 
@@ -20,6 +21,7 @@ struct MacLauncherApp: App {
                 catalogService: container.catalogService,
                 launchService: container.launchService,
                 layoutStore: container.layoutStore,
+                catalogCacheStore: container.catalogCacheStore,
                 onSuccessfulLaunch: {
                     LauncherAppDelegate.terminateAfterSuccessfulLaunch()
                 }
@@ -33,6 +35,7 @@ struct MacLauncherApp: App {
                 viewModel: viewModel,
                 iconLoader: container.iconLoader,
                 backgroundTransparencyPercent: backgroundTransparencyPercent,
+                displayLoadTimeInMilliseconds: displayLoadTimeInMilliseconds,
                 appDelegate: appDelegate
             )
             .frame(width: 860, height: 620)
@@ -43,7 +46,8 @@ struct MacLauncherApp: App {
 
         Settings {
             SettingsView(
-                backgroundTransparencyPercent: $backgroundTransparencyPercent
+                backgroundTransparencyPercent: $backgroundTransparencyPercent,
+                displayLoadTimeInMilliseconds: $displayLoadTimeInMilliseconds
             )
             .frame(width: 420)
             .background(SettingsWindowConfigurator())
@@ -67,6 +71,7 @@ private struct LauncherRootView: View {
     let viewModel: HomeViewModel
     let iconLoader: any AppIconLoading
     let backgroundTransparencyPercent: Double
+    let displayLoadTimeInMilliseconds: Bool
     let appDelegate: LauncherAppDelegate
 
     var body: some View {
@@ -74,6 +79,7 @@ private struct LauncherRootView: View {
             viewModel: viewModel,
             iconLoader: iconLoader,
             backgroundTransparencyPercent: backgroundTransparencyPercent,
+            displayLoadTimeInMilliseconds: displayLoadTimeInMilliseconds,
             onOpenSettings: {
                 openSettings()
             },

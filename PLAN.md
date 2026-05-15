@@ -506,6 +506,11 @@ The launcher feels fast and robust.
 - The launcher window is identified and centered on the screen containing the pointer when it is focused on launch, clamped to the screen visible frame for multi-monitor setups.
 - Existing search stays synchronous because filtering is cheap after scanning moved off the main actor; no debounce is currently needed.
 - Tests now await refresh completion and cover the loading state during a background scan.
+- A persistent app catalog cache now lets the launcher show the previous app list immediately while a background scan refreshes it.
+- App tile icons now render a placeholder first and load real icons off the main actor, with `NSWorkspace` icon calls still cached by `iconCacheKey`.
+- Catalog scanning now skips package descendants and prefetches useful URL resource keys.
+- App startup/cache/scan/icon work emits Points of Interest signposts for Instruments profiling.
+- Settings can persistently toggle a bottom-left load-time readout in milliseconds.
 
 ---
 
