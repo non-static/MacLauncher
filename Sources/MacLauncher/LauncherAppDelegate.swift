@@ -7,6 +7,7 @@ final class LauncherAppDelegate: NSObject, NSApplicationDelegate {
 
     var launcherEscapeHandler: (@MainActor () -> Bool)?
 
+    private var didBecomeActive = false
     private var escapeKeyMonitor: Any?
 
     func applicationWillFinishLaunching(_ notification: Notification) {
@@ -17,6 +18,25 @@ final class LauncherAppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         installEscapeKeyMonitor()
         focusWindowsAfterLaunch()
+    }
+
+    func applicationDidBecomeActive(_ notification: Notification) {
+        didBecomeActive = true
+    }
+
+    func applicationDidResignActive(_ notification: Notification) {
+        guard didBecomeActive else {
+            return
+        }
+
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 80_000_000)
+            guard NSApp.isActive == false else {
+                return
+            }
+
+            Self.terminateAfterDeactivation()
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -74,6 +94,14 @@ final class LauncherAppDelegate: NSObject, NSApplicationDelegate {
     }
 
     static func terminateAfterSuccessfulLaunch() {
+        terminateWithForceExitFallback()
+    }
+
+    private static func terminateAfterDeactivation() {
+        terminateWithForceExitFallback()
+    }
+
+    private static func terminateWithForceExitFallback() {
         guard didRequestLaunchTermination == false else {
             return
         }

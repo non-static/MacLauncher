@@ -71,6 +71,7 @@ Completed vertical slice:
 - manually refresh the app catalog
 - load app icons through a replaceable icon loader
 - activate and foreground the app window when launched from `swift run`
+- exit when focus moves to another app by outside click or app switching
 - build a local `.pkg` installer that installs `MacLauncher.app` into `/Applications`
 - modern app logo and packaged `.icns` app icon
 - runtime app icon when launched through `swift run`
