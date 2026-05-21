@@ -249,6 +249,7 @@ This is the first true vertical slice. Keep it brutally small.
 - The app shows a grid of installed apps.
 - Clicking an app launches it.
 - MacLauncher exits after a successful app launch.
+- MacLauncher exits when focus moves to another app through outside click or app switching.
 - MacLauncher still exits after an accepted launch request if `NSWorkspace` delays its completion callback.
 - App-layer termination has a short force-exit fallback so launch clicks cannot leave MacLauncher running after success.
 - Failed launches leave MacLauncher open and show an error.
