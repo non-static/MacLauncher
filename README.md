@@ -76,6 +76,7 @@ Completed vertical slice:
 - runtime app icon when launched through `swift run`
 - background transparency setting, defaulting to 30%
 - optional bottom-left app load time display in milliseconds
+- settings for showing system apps, showing hidden apps, resetting layout, tile size, column mode, login startup, and focus hotkey
 - bottom-right version and commit labels with GitHub repository and commit links
 - fixed-size launcher window with rounded corners, no titlebar, no close/minimize/zoom traffic-light buttons, and no menu sizing commands
 - custom groups with a group shelf, drag/drop into groups, nested group panel, rename, delete, and move in/out support

@@ -34,6 +34,10 @@ final class LauncherAppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    static func focusLauncherWindow() {
+        focusWindows()
+    }
+
     private static func focusWindows() {
         NSApp.activate(ignoringOtherApps: true)
         let preferredScreen = preferredScreen()

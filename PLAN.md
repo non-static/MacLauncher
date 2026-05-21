@@ -532,6 +532,15 @@ The app is usable by real users, not just developers.
 - Settings persist.
 - Changes apply cleanly.
 
+### Implemented in this pass
+- Settings now persist toggles for showing system apps and hidden apps.
+- Hidden apps can be shown, then unhidden from the app context menu.
+- Reset Layout is available in Settings and uses the existing layout reset path.
+- Tile size can be set to Small, Medium, or Large.
+- Columns can be adaptive or fixed, with a persisted fixed column count from `2...8`.
+- Startup behavior includes a persisted Open at Login toggle backed by `SMAppService.mainApp`.
+- Hotkey preference persists and applies a local Focus Launcher shortcut when the app is active.
+
 ### Already covered in Phase 1
 - Background transparency setting.
 - Settings button beside Refresh.

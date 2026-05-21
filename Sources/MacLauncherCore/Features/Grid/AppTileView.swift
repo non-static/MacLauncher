@@ -11,6 +11,7 @@ public struct AppTileView: View {
     private let iconLoader: any AppIconLoading
     private let isSelected: Bool
     private let dropIndicator: AppTileDropIndicator
+    private let tileSize: LauncherTileSize
 
     @State private var isHovered = false
     @State private var icon: NSImage?
@@ -19,12 +20,14 @@ public struct AppTileView: View {
         app: AppItem,
         iconLoader: any AppIconLoading,
         isSelected: Bool = false,
-        dropIndicator: AppTileDropIndicator = .none
+        dropIndicator: AppTileDropIndicator = .none,
+        tileSize: LauncherTileSize = .medium
     ) {
         self.app = app
         self.iconLoader = iconLoader
         self.isSelected = isSelected
         self.dropIndicator = dropIndicator
+        self.tileSize = tileSize
     }
 
     public var body: some View {
@@ -32,16 +35,16 @@ public struct AppTileView: View {
             Image(nsImage: icon ?? Self.placeholderIcon)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: 64, height: 64)
+                .frame(width: metrics.iconLength, height: metrics.iconLength)
 
             Text(app.name)
                 .font(.callout)
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
-                .frame(width: LauncherDesign.tileLabelWidth, height: 38, alignment: .top)
+                .frame(width: metrics.labelWidth, height: metrics.labelHeight, alignment: .top)
                 .foregroundStyle(.primary)
         }
-        .frame(width: LauncherDesign.tileWidth, height: LauncherDesign.tileHeight)
+        .frame(width: metrics.width, height: metrics.height)
         .background(tileBackground)
         .overlay(tileBorder)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
@@ -59,6 +62,10 @@ public struct AppTileView: View {
             return Color.accentColor.opacity(isHovered ? 0.18 : 0.12)
         }
         return isHovered ? Color.primary.opacity(0.08) : Color.clear
+    }
+
+    private var metrics: LauncherTileMetrics {
+        tileSize.metrics
     }
 
     @ViewBuilder
@@ -92,7 +99,7 @@ public struct AppTileView: View {
     private var insertionMarker: some View {
         Capsule()
             .fill(Color.accentColor)
-            .frame(width: 4, height: 92)
+            .frame(width: 4, height: max(72, metrics.height - 28))
             .shadow(color: Color.accentColor.opacity(0.45), radius: 4)
             .padding(.horizontal, -6)
     }

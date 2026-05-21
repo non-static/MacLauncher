@@ -7,6 +7,9 @@ public struct HomeView: View {
     private let iconLoader: any AppIconLoading
     private let backgroundTransparencyPercent: Double
     private let displayLoadTimeInMilliseconds: Bool
+    private let showsSystemApps: Bool
+    private let showsHiddenApps: Bool
+    private let gridConfiguration: LauncherGridConfiguration
     private let onOpenSettings: () -> Void
     private let onRegisterEscapeHandler: (@escaping @MainActor () -> Bool) -> Void
     private let onUnregisterEscapeHandler: () -> Void
@@ -20,6 +23,9 @@ public struct HomeView: View {
         iconLoader: any AppIconLoading,
         backgroundTransparencyPercent: Double,
         displayLoadTimeInMilliseconds: Bool,
+        showsSystemApps: Bool = true,
+        showsHiddenApps: Bool = false,
+        gridConfiguration: LauncherGridConfiguration = .default,
         onOpenSettings: @escaping () -> Void,
         onRegisterEscapeHandler: @escaping (@escaping @MainActor () -> Bool) -> Void = { _ in },
         onUnregisterEscapeHandler: @escaping () -> Void = {}
@@ -28,6 +34,9 @@ public struct HomeView: View {
         self.iconLoader = iconLoader
         self.backgroundTransparencyPercent = backgroundTransparencyPercent
         self.displayLoadTimeInMilliseconds = displayLoadTimeInMilliseconds
+        self.showsSystemApps = showsSystemApps
+        self.showsHiddenApps = showsHiddenApps
+        self.gridConfiguration = gridConfiguration
         self.onOpenSettings = onOpenSettings
         self.onRegisterEscapeHandler = onRegisterEscapeHandler
         self.onUnregisterEscapeHandler = onUnregisterEscapeHandler
@@ -55,6 +64,7 @@ public struct HomeView: View {
             }
         }
         .onAppear {
+            applyDisplayOptions()
             if viewModel.totalAppCount == 0 {
                 viewModel.refresh()
             }
@@ -76,6 +86,12 @@ public struct HomeView: View {
         }
         .onDisappear {
             onUnregisterEscapeHandler()
+        }
+        .onChange(of: showsSystemApps) { _, _ in
+            applyDisplayOptions()
+        }
+        .onChange(of: showsHiddenApps) { _, _ in
+            applyDisplayOptions()
         }
         .background(
             LauncherKeyboardMonitor(
@@ -303,6 +319,7 @@ public struct HomeView: View {
             GroupPanelView(
                 viewModel: viewModel,
                 iconLoader: iconLoader,
+                gridConfiguration: gridConfiguration,
                 groupID: groupID,
                 onClose: {
                     closeGroupPanelAndRestoreFocus()
@@ -390,11 +407,16 @@ public struct HomeView: View {
                         groups: viewModel.groups,
                         iconLoader: iconLoader,
                         selectedAppID: viewModel.selectedAppID,
+                        hiddenAppIDs: viewModel.hiddenAppIDs,
+                        configuration: gridConfiguration,
                         onLaunch: { app in
                             viewModel.launch(app)
                         },
                         onHide: { app in
                             viewModel.hideApp(app)
+                        },
+                        onToggleHidden: { app in
+                            viewModel.toggleHiddenApp(app)
                         },
                         onCreateGroup: { app in
                             viewModel.createGroup(containing: app)
@@ -432,6 +454,13 @@ public struct HomeView: View {
         viewModel.searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             ? "app.dashed"
             : "magnifyingglass"
+    }
+
+    private func applyDisplayOptions() {
+        viewModel.setDisplayOptions(
+            showsSystemApps: showsSystemApps,
+            showsHiddenApps: showsHiddenApps
+        )
     }
 }
 
@@ -546,14 +575,20 @@ private struct GroupPanelView: View {
     @ObservedObject var viewModel: HomeViewModel
 
     let iconLoader: any AppIconLoading
+    let gridConfiguration: LauncherGridConfiguration
     let groupID: AppGroup.ID
     let onClose: () -> Void
 
     @State private var nameDraft = ""
 
-    private let columns = [
-        GridItem(.adaptive(minimum: LauncherDesign.tileMinWidth), spacing: 16)
-    ]
+    private var columns: [GridItem] {
+        [
+            GridItem(
+                .adaptive(minimum: gridConfiguration.metrics.minWidth),
+                spacing: 16
+            )
+        ]
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -620,7 +655,11 @@ private struct GroupPanelView: View {
                         Button {
                             viewModel.launchApp(appID: app.id, fromGroupID: groupID)
                         } label: {
-                            AppTileView(app: app, iconLoader: iconLoader)
+                            AppTileView(
+                                app: app,
+                                iconLoader: iconLoader,
+                                tileSize: gridConfiguration.tileSize
+                            )
                         }
                         .buttonStyle(.plain)
                         .contextMenu {
