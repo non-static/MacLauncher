@@ -22,6 +22,7 @@ final class LauncherAppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidBecomeActive(_ notification: Notification) {
         didBecomeActive = true
+        Self.centerLauncherWindowsOnPreferredScreen()
     }
 
     func applicationDidResignActive(_ notification: Notification) {
@@ -60,16 +61,21 @@ final class LauncherAppDelegate: NSObject, NSApplicationDelegate {
 
     private static func focusWindows() {
         NSApp.activate(ignoringOtherApps: true)
-        let preferredScreen = preferredScreen()
+        centerLauncherWindowsOnPreferredScreen()
 
         for window in NSApp.windows where window.canBecomeKey {
-            if window.identifier == LauncherWindowIdentifiers.launcher,
-               let preferredScreen
-            {
-                center(window, on: preferredScreen)
-            }
             window.makeKeyAndOrderFront(nil)
             window.orderFrontRegardless()
+        }
+    }
+
+    private static func centerLauncherWindowsOnPreferredScreen() {
+        guard let preferredScreen = preferredScreen() else {
+            return
+        }
+
+        for window in NSApp.windows where window.identifier == LauncherWindowIdentifiers.launcher {
+            center(window, on: preferredScreen)
         }
     }
 

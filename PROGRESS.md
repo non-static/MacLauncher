@@ -639,7 +639,29 @@ Reason:
 - Updated local `/Applications/MacLauncher.app` from `.build/installer/MacLauncher.app` after exit-on-deactivate change.
 - Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
 - Ran installed app smoke from `/Applications/MacLauncher.app` for 5 seconds after exit-on-deactivate change: exits 0 after quit.
+- Created branch `codex/center-on-activation`.
+- Refactored launcher window centering into `centerLauncherWindowsOnPreferredScreen()`.
+- MacLauncher now recenters the launcher window whenever `applicationDidBecomeActive` fires, so entering or re-entering the app places it in the center of the current preferred screen.
+- Existing launch foregrounding still centers before ordering windows front.
+- Updated `PLAN.md` and `README.md` with center-on-enter behavior.
+- Ran `git diff --check` after center-on-enter change: exits 0.
+- Ran `swift build` after center-on-enter change: exits 0.
+- Ran `swift test` after center-on-enter change: exits 0.
+- Rebuilt package with `VERSION=0.0.2 scripts/build-installer.sh`: exits 0.
+- Verified packaged `CFBundleShortVersionString` is `0.0.2` and code signature passes.
+- Ran `swift run MacLauncher` after center-on-enter change for 5 seconds: exits 0 after test kill.
+- Disabled launcher window movement by setting `window.isMovable = false` and `window.isMovableByWindowBackground = false`.
+- Updated `PLAN.md` and `README.md` with fixed-position window behavior.
+- Re-ran `git diff --check` after fixed-position window change: exits 0.
+- Re-ran `swift build` after fixed-position window change: exits 0.
+- Re-ran `swift test` after fixed-position window change: exits 0.
+- Rebuilt package with `VERSION=0.0.2 scripts/build-installer.sh` after fixed-position window change: exits 0.
+- Verified packaged `CFBundleShortVersionString` is `0.0.2` and code signature passes after fixed-position window change.
+- Ran `swift run MacLauncher` after fixed-position window change for 5 seconds: exits 0 after test kill.
+- Updated local `/Applications/MacLauncher.app` from `.build/installer/MacLauncher.app` after center-on-enter and fixed-position window changes.
+- Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
+- Ran installed app smoke from `/Applications/MacLauncher.app` for 5 seconds after center-on-enter and fixed-position window changes: exits 0 after quit.
 
 ## Next steps
 
-1. Create PR from `codex/exit-on-deactivate`.
+1. Create PR from `codex/center-on-activation`.
