@@ -70,7 +70,7 @@ Completed vertical slice:
 - launch apps through `NSWorkspace`
 - manually refresh the app catalog
 - load app icons through a replaceable icon loader
-- activate and foreground the app window when launched from `swift run`
+- activate, foreground, and center the app window when launched or re-entered
 - exit when focus moves to another app by outside click or app switching
 - build a local `.pkg` installer that installs `MacLauncher.app` into `/Applications`
 - modern app logo and packaged `.icns` app icon
@@ -79,7 +79,7 @@ Completed vertical slice:
 - optional bottom-left app load time display in milliseconds
 - settings for showing system apps, showing hidden apps, resetting layout, tile size, column mode, login startup, and focus hotkey
 - bottom-right version and commit labels with GitHub repository and commit links
-- fixed-size launcher window with rounded corners, no titlebar, no close/minimize/zoom traffic-light buttons, and no menu sizing commands
+- fixed-position launcher window with rounded corners, no titlebar, no close/minimize/zoom traffic-light buttons, and no menu sizing commands
 - custom groups with a group shelf, drag/drop into groups, nested group panel, rename, delete, and move in/out support
 - persistent catalog cache and async icon loading for faster perceived startup
 

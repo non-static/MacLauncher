@@ -33,7 +33,8 @@ struct WindowTransparencyConfigurator: NSViewRepresentable {
         window.title = ""
         window.titleVisibility = .hidden
         window.titlebarAppearsTransparent = true
-        window.isMovableByWindowBackground = true
+        window.isMovable = false
+        window.isMovableByWindowBackground = false
         window.minSize = Self.fixedWindowSize
         window.maxSize = Self.fixedWindowSize
         window.contentMinSize = Self.fixedWindowSize

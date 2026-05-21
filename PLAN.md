@@ -250,6 +250,7 @@ This is the first true vertical slice. Keep it brutally small.
 - Clicking an app launches it.
 - MacLauncher exits after a successful app launch.
 - MacLauncher exits when focus moves to another app through outside click or app switching.
+- MacLauncher centers its launcher window whenever the app is entered or re-entered.
 - MacLauncher still exits after an accepted launch request if `NSWorkspace` delays its completion callback.
 - App-layer termination has a short force-exit fallback so launch clicks cannot leave MacLauncher running after success.
 - Failed launches leave MacLauncher open and show an error.
@@ -265,6 +266,7 @@ This is the first true vertical slice. Keep it brutally small.
 - Main UI shows the app version plus current commit ID in a corner, with links to the GitHub repository and commit.
 - Launcher window has no titlebar or close/minimize/zoom traffic-light buttons, and those controls are disabled if AppKit creates them.
 - Launcher window uses a fixed size and cannot be resized.
+- Launcher window cannot be moved.
 - Launcher window has rounded corners.
 - Window menu sizing/arrangement commands are removed so minimize/maximize cannot be triggered from the menu.
 - App icon is present in both `swift run` and packaged app flows.
