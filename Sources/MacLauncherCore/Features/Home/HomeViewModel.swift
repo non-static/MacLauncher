@@ -7,6 +7,7 @@ public final class HomeViewModel: ObservableObject {
     @Published public private(set) var groups: [AppGroup] = []
     @Published public private(set) var selectedAppID: AppItem.ID?
     @Published public private(set) var hiddenAppCount = 0
+    @Published public private(set) var hiddenAppIDs: Set<AppItem.ID> = []
     @Published public private(set) var isLoading = false
     @Published public private(set) var loadTimeMilliseconds: Int?
     @Published public var searchQuery = "" {
@@ -28,6 +29,8 @@ public final class HomeViewModel: ObservableObject {
     private var didAttemptLayoutLoad = false
     private var refreshTask: Task<Void, Never>?
     private var refreshGeneration = 0
+    private var showsSystemApps = true
+    private var showsHiddenApps = false
 
     public var totalAppCount: Int {
         searchableApps.count
@@ -51,10 +54,10 @@ public final class HomeViewModel: ObservableObject {
 
         let appsByID = Dictionary(uniqueKeysWithValues: discoveredApps.map { ($0.id, $0) })
         return group.appIDs.compactMap { appID in
-            guard layout.hiddenAppIDs.contains(appID) == false else {
-                return nil
-            }
-            return appsByID[appID]
+            appsByID[appID]
+        }
+        .filter { app in
+            isIncludedByDisplayOptions(app)
         }
     }
 
@@ -125,6 +128,23 @@ public final class HomeViewModel: ObservableObject {
         removeAppIDFromGroups(app.id)
         saveLayout()
         applyLayoutAndSearch()
+    }
+
+    public func unhideApp(_ app: AppItem) {
+        guard layout.hiddenAppIDs.remove(app.id) != nil else {
+            return
+        }
+
+        saveLayout()
+        applyLayoutAndSearch()
+    }
+
+    public func toggleHiddenApp(_ app: AppItem) {
+        if layout.hiddenAppIDs.contains(app.id) {
+            unhideApp(app)
+        } else {
+            hideApp(app)
+        }
     }
 
     @discardableResult
@@ -284,6 +304,21 @@ public final class HomeViewModel: ObservableObject {
     public func resetLayout() {
         layout = LauncherLayout(orderedAppIDs: discoveredApps.map(\.id))
         saveLayout()
+        applyLayoutAndSearch()
+    }
+
+    public func setDisplayOptions(
+        showsSystemApps: Bool,
+        showsHiddenApps: Bool
+    ) {
+        guard self.showsSystemApps != showsSystemApps ||
+              self.showsHiddenApps != showsHiddenApps
+        else {
+            return
+        }
+
+        self.showsSystemApps = showsSystemApps
+        self.showsHiddenApps = showsHiddenApps
         applyLayoutAndSearch()
     }
 
@@ -503,14 +538,34 @@ public final class HomeViewModel: ObservableObject {
         groups = layout.groups
 
         let groupedAppIDs = Set(layout.groups.flatMap(\.appIDs))
-        searchableApps = allOrderedApps.filter { app in
-            layout.hiddenAppIDs.contains(app.id) == false
+        let appsIncludedBySystemSetting = allOrderedApps.filter { app in
+            showsSystemApps || isSystemApp(app) == false
         }
+        let displayableApps = appsIncludedBySystemSetting.filter(isIncludedByDisplayOptions)
+        searchableApps = displayableApps
         visibleApps = searchableApps.filter { app in
             groupedAppIDs.contains(app.id) == false
         }
-        hiddenAppCount = allOrderedApps.filter { layout.hiddenAppIDs.contains($0.id) }.count
+        hiddenAppIDs = layout.hiddenAppIDs
+        hiddenAppCount = appsIncludedBySystemSetting.filter { layout.hiddenAppIDs.contains($0.id) }.count
         applySearch()
+    }
+
+    private func isIncludedByDisplayOptions(_ app: AppItem) -> Bool {
+        if showsSystemApps == false, isSystemApp(app) {
+            return false
+        }
+
+        if showsHiddenApps == false, layout.hiddenAppIDs.contains(app.id) {
+            return false
+        }
+
+        return true
+    }
+
+    private func isSystemApp(_ app: AppItem) -> Bool {
+        let path = app.appURL.standardizedFileURL.path
+        return path == "/System/Applications" || path.hasPrefix("/System/Applications/")
     }
 
     private func saveLayout() {

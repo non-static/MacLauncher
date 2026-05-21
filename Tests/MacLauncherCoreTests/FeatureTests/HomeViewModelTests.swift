@@ -574,6 +574,68 @@ struct HomeViewModelTests {
     }
 
     @Test
+    func displayOptionsCanHideSystemApps() async {
+        let userApp = makeApp(
+            id: "com.example.user",
+            name: "User",
+            appURL: URL(fileURLWithPath: "/Applications/User.app")
+        )
+        let systemApp = makeApp(
+            id: "com.example.system",
+            name: "System",
+            appURL: URL(fileURLWithPath: "/System/Applications/System.app")
+        )
+        let viewModel = HomeViewModel(
+            catalogService: StubCatalogService(apps: [systemApp, userApp]),
+            launchService: StubLaunchService()
+        )
+
+        await viewModel.refresh().value
+
+        #expect(viewModel.apps == [systemApp, userApp])
+
+        viewModel.setDisplayOptions(
+            showsSystemApps: false,
+            showsHiddenApps: false
+        )
+
+        #expect(viewModel.apps == [userApp])
+        #expect(viewModel.totalAppCount == 1)
+    }
+
+    @Test
+    func displayOptionsCanShowAndUnhideHiddenApps() async {
+        let apps = [
+            makeApp(id: "com.example.one", name: "One"),
+            makeApp(id: "com.example.two", name: "Two")
+        ]
+        let viewModel = HomeViewModel(
+            catalogService: StubCatalogService(apps: apps),
+            launchService: StubLaunchService()
+        )
+
+        await viewModel.refresh().value
+        viewModel.hideApp(apps[1])
+
+        #expect(viewModel.apps == [apps[0]])
+        #expect(viewModel.hiddenAppCount == 1)
+        #expect(viewModel.hiddenAppIDs == [apps[1].id])
+
+        viewModel.setDisplayOptions(
+            showsSystemApps: true,
+            showsHiddenApps: true
+        )
+
+        #expect(viewModel.apps == apps)
+
+        viewModel.toggleHiddenApp(apps[1])
+
+        #expect(viewModel.apps == apps)
+        #expect(viewModel.hiddenAppCount == 0)
+        #expect(viewModel.hiddenAppIDs.isEmpty)
+    }
+
+    @Test
     func selectionMovesWithinVisibleApps() async {
         let apps = [
             makeApp(id: "com.example.one", name: "One"),
@@ -744,13 +806,14 @@ struct HomeViewModelTests {
 
     private func makeApp(
         id: String = "com.example.app",
-        name: String = "Example"
+        name: String = "Example",
+        appURL: URL? = nil
     ) -> AppItem {
         AppItem(
             id: id,
             name: name,
             bundleIdentifier: id,
-            appURL: URL(fileURLWithPath: "/Applications/\(name).app"),
+            appURL: appURL ?? URL(fileURLWithPath: "/Applications/\(name).app"),
             iconCacheKey: id
         )
     }

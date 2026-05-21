@@ -601,8 +601,32 @@ Reason:
 - Rebuilt package with `VERSION=0.0.2 scripts/build-installer.sh`: exits 0.
 - Verified packaged `CFBundleShortVersionString` is `0.0.2` and code signature passes.
 - Ran `swift run MacLauncher` after the performance/load-time pass for 5 seconds: exits 0 after test kill.
+- Created branch `codex/phase9-settings-controls`.
+- Implemented Phase 9 settings and user controls:
+  - persisted Show System Apps toggle
+  - persisted Show Hidden Apps toggle
+  - hidden apps can be shown and unhidden from the app context menu
+  - Reset Layout button in Settings
+  - persisted tile size setting with Small, Medium, and Large options
+  - persisted column mode with Adaptive or Fixed choices
+  - fixed columns can be set from `2...8`
+  - persisted Open at Login setting backed by `SMAppService.mainApp`
+  - persisted hotkey preference that applies a local Focus Launcher shortcut while the app is active
+- Added grid configuration models for tile size, column mode, and hotkey options.
+- Updated `HomeViewModel` filtering so system and hidden app visibility settings apply to grid, search, and groups.
+- Added unit tests for system-app filtering, hidden-app show/unhide behavior, and fixed column count calculation.
+- Updated `PLAN.md` and `README.md` with Phase 9 settings controls.
+- Ran `swift test` after Phase 9 implementation: exits 0.
+- Ran `git diff --check` after Phase 9 implementation: exits 0.
+- Ran `swift build` after Phase 9 implementation: exits 0.
+- Re-ran `swift test` after Phase 9 implementation: exits 0.
+- Rebuilt package with `VERSION=0.0.2 scripts/build-installer.sh`: exits 0.
+- Verified packaged `CFBundleShortVersionString` is `0.0.2` and code signature passes.
+- Ran `swift run MacLauncher` after Phase 9 implementation for 5 seconds: exits 0 after test kill.
+- Updated local `/Applications/MacLauncher.app` from `.build/installer/MacLauncher.app` after Phase 9 implementation.
+- Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
+- Ran installed app smoke from `/Applications/MacLauncher.app` for 5 seconds after Phase 9 implementation: exits 0 after quit.
 
 ## Next steps
 
-1. Review the performance/load-time diff on `codex/perf-load-time`.
-2. Create a PR when ready.
+1. Create PR from `codex/phase9-settings-controls`.

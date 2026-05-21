@@ -6,8 +6,11 @@ public struct AppGridView: View {
     private let groups: [AppGroup]
     private let iconLoader: any AppIconLoading
     private let selectedAppID: AppItem.ID?
+    private let hiddenAppIDs: Set<AppItem.ID>
+    private let configuration: LauncherGridConfiguration
     private let onLaunch: (AppItem) -> Void
     private let onHide: (AppItem) -> Void
+    private let onToggleHidden: (AppItem) -> Void
     private let onCreateGroup: (AppItem) -> Void
     private let onMoveToGroup: (AppItem, AppGroup.ID) -> Void
     private let onMoveInLayout: (AppItem, Int) -> Void
@@ -18,22 +21,20 @@ public struct AppGridView: View {
     @State private var dropTarget: AppGridDropTarget?
     @State private var scrollRequest: AppGridScrollRequest?
 
-    private let columns = [
-        GridItem(.adaptive(minimum: LauncherDesign.tileMinWidth), spacing: Self.gridSpacing)
-    ]
-
     private static let gridSpacing: CGFloat = 18
     private static let gridPadding: CGFloat = 24
     private static let edgeScrollZoneHeight: CGFloat = 52
-    private static let dropSlotWidth = (LauncherDesign.tileWidth / 2) + gridSpacing
 
     public init(
         apps: [AppItem],
         groups: [AppGroup] = [],
         iconLoader: any AppIconLoading,
         selectedAppID: AppItem.ID? = nil,
+        hiddenAppIDs: Set<AppItem.ID> = [],
+        configuration: LauncherGridConfiguration = .default,
         onLaunch: @escaping (AppItem) -> Void,
         onHide: @escaping (AppItem) -> Void = { _ in },
+        onToggleHidden: ((AppItem) -> Void)? = nil,
         onCreateGroup: @escaping (AppItem) -> Void = { _ in },
         onMoveToGroup: @escaping (AppItem, AppGroup.ID) -> Void = { _, _ in },
         onMoveInLayout: @escaping (AppItem, Int) -> Void = { _, _ in },
@@ -44,8 +45,11 @@ public struct AppGridView: View {
         self.groups = groups
         self.iconLoader = iconLoader
         self.selectedAppID = selectedAppID
+        self.hiddenAppIDs = hiddenAppIDs
+        self.configuration = configuration
         self.onLaunch = onLaunch
         self.onHide = onHide
+        self.onToggleHidden = onToggleHidden ?? onHide
         self.onCreateGroup = onCreateGroup
         self.onMoveToGroup = onMoveToGroup
         self.onMoveInLayout = onMoveInLayout
@@ -67,7 +71,8 @@ public struct AppGridView: View {
                                         app: app,
                                         iconLoader: iconLoader,
                                         isSelected: app.id == selectedAppID,
-                                        dropIndicator: dropIndicator(for: app.id)
+                                        dropIndicator: dropIndicator(for: app.id),
+                                        tileSize: configuration.tileSize
                                     )
                                 }
                                 .buttonStyle(.plain)
@@ -87,8 +92,8 @@ public struct AppGridView: View {
 
                                     Divider()
 
-                                    Button("Hide App") {
-                                        onHide(app)
+                                    Button(hiddenAppIDs.contains(app.id) ? "Unhide App" : "Hide App") {
+                                        onToggleHidden(app)
                                     }
 
                                     Divider()
@@ -122,7 +127,7 @@ public struct AppGridView: View {
                                 )
                                 .frame(maxWidth: .infinity, alignment: .trailing)
                             }
-                            .frame(width: LauncherDesign.tileWidth, height: LauncherDesign.tileHeight)
+                            .frame(width: metrics.width, height: metrics.height)
                             .transition(.opacity.combined(with: .scale(scale: 0.98)))
                         }
                     }
@@ -148,6 +153,9 @@ public struct AppGridView: View {
                 .onChange(of: geometry.size.width) { _, width in
                     reportColumnCount(for: width)
                 }
+                .onChange(of: configuration) { _, _ in
+                    reportColumnCount(for: geometry.size.width)
+                }
                 .onChange(of: selectedAppID) { _, _ in
                     scrollToSelection(with: proxy)
                 }
@@ -171,14 +179,46 @@ public struct AppGridView: View {
         }
     }
 
-    static func estimatedColumnCount(for width: CGFloat) -> Int {
+    static func estimatedColumnCount(
+        for width: CGFloat,
+        configuration: LauncherGridConfiguration = .default
+    ) -> Int {
+        if configuration.columnMode == .fixed {
+            return configuration.fixedColumnCount
+        }
+
         let contentWidth = max(0, width - (gridPadding * 2))
-        let columnWidth = LauncherDesign.tileMinWidth + gridSpacing
+        let columnWidth = configuration.metrics.minWidth + gridSpacing
         return max(1, Int((contentWidth + gridSpacing) / columnWidth))
     }
 
     private func reportColumnCount(for width: CGFloat) {
-        onColumnCountChange(Self.estimatedColumnCount(for: width))
+        onColumnCountChange(Self.estimatedColumnCount(for: width, configuration: configuration))
+    }
+
+    private var metrics: LauncherTileMetrics {
+        configuration.metrics
+    }
+
+    private var dropSlotWidth: CGFloat {
+        (metrics.width / 2) + Self.gridSpacing
+    }
+
+    private var columns: [GridItem] {
+        switch configuration.columnMode {
+        case .adaptive:
+            [
+                GridItem(
+                    .adaptive(minimum: metrics.minWidth),
+                    spacing: Self.gridSpacing
+                )
+            ]
+        case .fixed:
+            Array(
+                repeating: GridItem(.flexible(minimum: metrics.minWidth), spacing: Self.gridSpacing),
+                count: configuration.fixedColumnCount
+            )
+        }
     }
 
     private func scrollToSelection(with proxy: ScrollViewProxy) {
@@ -224,7 +264,7 @@ public struct AppGridView: View {
         indicator: AppTileDropIndicator
     ) -> some View {
         Color.clear
-            .frame(width: Self.dropSlotWidth, height: LauncherDesign.tileHeight)
+            .frame(width: dropSlotWidth, height: metrics.height)
             .offset(x: indicator == .before ? -(Self.gridSpacing / 2) : Self.gridSpacing / 2)
             .contentShape(Rectangle())
             .allowsHitTesting(draggedAppID != nil)
