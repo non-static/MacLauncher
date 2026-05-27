@@ -420,6 +420,7 @@ Do **not** mimic old Launchpad folder animations at first. Use a simple, clean g
 - Users can create a group from the selected app or from an app context menu.
 - Users can move selected apps or individual app context-menu targets into existing groups.
 - Users can drag an app tile onto a group shelf item to move it into that group.
+- Dragging an app tile toward a group shelf item does not immediately scroll the main app grid; with groups visible, top-edge reorder autoscroll requires a deliberate hold in a narrow grid-edge strip.
 - Opening a group shows a simple in-window modal panel with a nested app grid.
 - Pressing Escape closes an open group panel before falling back to search clear or app quit.
 - Closing a group panel restores keyboard focus to the launcher search field.
