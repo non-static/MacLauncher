@@ -17,6 +17,7 @@ public struct HomeView: View {
     @FocusState private var isSearchFocused: Bool
     @State private var navigationColumnCount = 1
     @State private var openedGroupID: AppGroup.ID?
+    @State private var isGroupDropTargeted = false
 
     public init(
         viewModel: HomeViewModel,
@@ -390,6 +391,9 @@ public struct HomeView: View {
                         },
                         onDropApp: { appID, group in
                             viewModel.moveApp(appID: appID, toGroup: group.id)
+                        },
+                        onDropTargetedChange: { isTargeted in
+                            isGroupDropTargeted = isTargeted
                         }
                     )
                     Divider()
@@ -409,6 +413,7 @@ public struct HomeView: View {
                         selectedAppID: viewModel.selectedAppID,
                         hiddenAppIDs: viewModel.hiddenAppIDs,
                         configuration: gridConfiguration,
+                        suspendEdgeAutoScroll: isGroupDropTargeted,
                         onLaunch: { app in
                             viewModel.launch(app)
                         },
@@ -470,6 +475,7 @@ private struct GroupShelfView: View {
     let onOpen: (AppGroup) -> Void
     let onDelete: (AppGroup) -> Void
     let onDropApp: (AppItem.ID, AppGroup) -> Void
+    let onDropTargetedChange: (Bool) -> Void
 
     @State private var targetedGroupID: AppGroup.ID?
 
@@ -523,6 +529,12 @@ private struct GroupShelfView: View {
             .padding(.vertical, 14)
         }
         .frame(height: 126)
+        .onChange(of: targetedGroupID) { _, groupID in
+            onDropTargetedChange(groupID != nil)
+        }
+        .onDisappear {
+            onDropTargetedChange(false)
+        }
     }
 
     private func borderColor(for group: AppGroup) -> Color {
@@ -533,7 +545,11 @@ private struct GroupShelfView: View {
         Binding(
             get: { targetedGroupID == group.id },
             set: { isTargeted in
-                targetedGroupID = isTargeted ? group.id : nil
+                if isTargeted {
+                    targetedGroupID = group.id
+                } else if targetedGroupID == group.id {
+                    targetedGroupID = nil
+                }
             }
         )
     }

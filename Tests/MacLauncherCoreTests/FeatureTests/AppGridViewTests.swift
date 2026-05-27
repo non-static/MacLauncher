@@ -20,4 +20,23 @@ struct AppGridViewTests {
 
         #expect(AppGridView.estimatedColumnCount(for: 160, configuration: configuration) == 6)
     }
+
+    @Test
+    func edgeAutoScrollDisablesWhileSuspended() {
+        #expect(AppGridView.allowsEdgeAutoScroll(draggedAppID: "app", isSuspended: false))
+        #expect(AppGridView.allowsEdgeAutoScroll(draggedAppID: nil, isSuspended: false) == false)
+        #expect(AppGridView.allowsEdgeAutoScroll(draggedAppID: "app", isSuspended: true) == false)
+    }
+
+    @Test
+    func topEdgeScrollDelaysWhenGroupsExist() {
+        #expect(AppGridView.topEdgeScrollDelayNanoseconds(hasGroups: false) == 0)
+        #expect(AppGridView.topEdgeScrollDelayNanoseconds(hasGroups: true) == 900_000_000)
+    }
+
+    @Test
+    func topEdgeScrollZoneShrinksWhenGroupsExist() {
+        #expect(AppGridView.topEdgeScrollZoneHeight(hasGroups: false) == 52)
+        #expect(AppGridView.topEdgeScrollZoneHeight(hasGroups: true) == 16)
+    }
 }

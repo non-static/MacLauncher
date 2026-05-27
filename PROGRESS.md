@@ -661,7 +661,22 @@ Reason:
 - Updated local `/Applications/MacLauncher.app` from `.build/installer/MacLauncher.app` after center-on-enter and fixed-position window changes.
 - Verified installed app signature with `codesign --verify --deep --strict --verbose=2`.
 - Ran installed app smoke from `/Applications/MacLauncher.app` for 5 seconds after center-on-enter and fixed-position window changes: exits 0 after quit.
+- Created branch `codex/no-scroll-when-dropping-to-group`.
+- Delayed top-edge app-grid autoscroll while groups exist, so dragging upward toward the group shelf does not immediately scroll the app list.
+- Narrowed the grouped top-edge autoscroll strip to 16 px and increased the grouped top-edge delay to 900 ms, making normal folder drops win while still allowing deliberate hold-to-scroll for reorder.
+- Added group-shelf drop targeting state that suspends app-grid edge autoscroll while a folder is the active drop target.
+- Cleared pending drop indicators and delayed scroll requests when group targeting suspends grid edge autoscroll.
+- Added unit coverage for suspended edge autoscroll and grouped top-edge scroll delay.
+- Updated `PLAN.md` with the folder-drop no-immediate-scroll behavior.
+- Ran `git diff --check` after folder-drop scroll change: exits 0.
+- Ran `swift test` after folder-drop scroll change: exits 0.
+- Ran `swift run MacLauncher` after folder-drop scroll change for 5 seconds: exits 0 after quit.
+- Re-ran `git diff --check` after grouped top-edge UX tuning: exits 0.
+- Re-ran `swift test` after grouped top-edge UX tuning: exits 0.
+- Re-ran `swift run MacLauncher` after grouped top-edge UX tuning for 5 seconds: exits 0 after quit.
+- Re-ran `swift test` before creating the folder-drop scroll PR: exits 0.
 
 ## Next steps
 
-1. Create PR from `codex/center-on-activation`.
+1. Create PR from `codex/no-scroll-when-dropping-to-group`.
+2. After the PR merges, update local `/Applications/MacLauncher.app` from latest `main`.

@@ -8,6 +8,7 @@ public struct AppGridView: View {
     private let selectedAppID: AppItem.ID?
     private let hiddenAppIDs: Set<AppItem.ID>
     private let configuration: LauncherGridConfiguration
+    private let suspendEdgeAutoScroll: Bool
     private let onLaunch: (AppItem) -> Void
     private let onHide: (AppItem) -> Void
     private let onToggleHidden: (AppItem) -> Void
@@ -20,10 +21,13 @@ public struct AppGridView: View {
     @State private var draggedAppID: AppItem.ID?
     @State private var dropTarget: AppGridDropTarget?
     @State private var scrollRequest: AppGridScrollRequest?
+    @State private var delayedScrollTarget: AppGridDropTarget?
 
     private static let gridSpacing: CGFloat = 18
     private static let gridPadding: CGFloat = 24
     private static let edgeScrollZoneHeight: CGFloat = 52
+    private static let groupedTopEdgeScrollZoneHeight: CGFloat = 16
+    private static let groupedTopEdgeScrollDelayNanoseconds: UInt64 = 900_000_000
 
     public init(
         apps: [AppItem],
@@ -32,6 +36,7 @@ public struct AppGridView: View {
         selectedAppID: AppItem.ID? = nil,
         hiddenAppIDs: Set<AppItem.ID> = [],
         configuration: LauncherGridConfiguration = .default,
+        suspendEdgeAutoScroll: Bool = false,
         onLaunch: @escaping (AppItem) -> Void,
         onHide: @escaping (AppItem) -> Void = { _ in },
         onToggleHidden: ((AppItem) -> Void)? = nil,
@@ -47,6 +52,7 @@ public struct AppGridView: View {
         self.selectedAppID = selectedAppID
         self.hiddenAppIDs = hiddenAppIDs
         self.configuration = configuration
+        self.suspendEdgeAutoScroll = suspendEdgeAutoScroll
         self.onLaunch = onLaunch
         self.onHide = onHide
         self.onToggleHidden = onToggleHidden ?? onHide
@@ -163,6 +169,15 @@ public struct AppGridView: View {
                     reconcileDragState()
                     scrollToSelection(with: proxy)
                 }
+                .onChange(of: suspendEdgeAutoScroll) { _, isSuspended in
+                    guard isSuspended else {
+                        return
+                    }
+
+                    dropTarget = nil
+                    delayedScrollTarget = nil
+                    scrollRequest = nil
+                }
                 .onChange(of: dropTarget) { _, _ in
                     scrollToDropTarget(with: proxy)
                 }
@@ -190,6 +205,21 @@ public struct AppGridView: View {
         let contentWidth = max(0, width - (gridPadding * 2))
         let columnWidth = configuration.metrics.minWidth + gridSpacing
         return max(1, Int((contentWidth + gridSpacing) / columnWidth))
+    }
+
+    static func allowsEdgeAutoScroll(
+        draggedAppID: AppItem.ID?,
+        isSuspended: Bool
+    ) -> Bool {
+        draggedAppID != nil && isSuspended == false
+    }
+
+    static func topEdgeScrollDelayNanoseconds(hasGroups: Bool) -> UInt64 {
+        hasGroups ? groupedTopEdgeScrollDelayNanoseconds : 0
+    }
+
+    static func topEdgeScrollZoneHeight(hasGroups: Bool) -> CGFloat {
+        hasGroups ? groupedTopEdgeScrollZoneHeight : edgeScrollZoneHeight
     }
 
     private func reportColumnCount(for width: CGFloat) {
@@ -238,6 +268,9 @@ public struct AppGridView: View {
         }
         if let dropTarget, appIDs.contains(dropTarget.appID) == false {
             self.dropTarget = nil
+        }
+        if let delayedScrollTarget, appIDs.contains(delayedScrollTarget.appID) == false {
+            self.delayedScrollTarget = nil
         }
     }
 
@@ -289,21 +322,40 @@ public struct AppGridView: View {
         rowStride: Int
     ) -> some View {
         Color.clear
-            .frame(height: Self.edgeScrollZoneHeight)
+            .frame(height: edgeScrollZoneHeight(for: edge))
             .contentShape(Rectangle())
-            .allowsHitTesting(draggedAppID != nil)
+            .allowsHitTesting(
+                Self.allowsEdgeAutoScroll(
+                    draggedAppID: draggedAppID,
+                    isSuspended: suspendEdgeAutoScroll
+                )
+            )
             .onDrop(
                 of: [UTType.plainText],
                 delegate: AppGridEdgeDropDelegate(
                     edge: edge,
                     appIDs: apps.map(\.id),
                     rowStride: rowStride,
+                    scrollDelayNanoseconds: edge == .top
+                        ? Self.topEdgeScrollDelayNanoseconds(hasGroups: groups.isEmpty == false)
+                        : 0,
+                    isScrollSuspended: suspendEdgeAutoScroll,
                     draggedAppID: $draggedAppID,
                     dropTarget: $dropTarget,
                     scrollRequest: $scrollRequest,
+                    delayedScrollTarget: $delayedScrollTarget,
                     onReorder: onReorder
                 )
             )
+    }
+
+    private func edgeScrollZoneHeight(for edge: AppGridEdge) -> CGFloat {
+        switch edge {
+        case .top:
+            Self.topEdgeScrollZoneHeight(hasGroups: groups.isEmpty == false)
+        case .bottom:
+            Self.edgeScrollZoneHeight
+        }
     }
 }
 
@@ -397,15 +449,18 @@ private struct AppGridEdgeDropDelegate: DropDelegate {
     let edge: AppGridEdge
     let appIDs: [AppItem.ID]
     let rowStride: Int
+    let scrollDelayNanoseconds: UInt64
+    let isScrollSuspended: Bool
 
     @Binding var draggedAppID: AppItem.ID?
     @Binding var dropTarget: AppGridDropTarget?
     @Binding var scrollRequest: AppGridScrollRequest?
+    @Binding var delayedScrollTarget: AppGridDropTarget?
 
     let onReorder: (AppItem.ID, Int) -> Bool
 
     func validateDrop(info: DropInfo) -> Bool {
-        target() != nil
+        isScrollSuspended == false && target() != nil
     }
 
     func dropUpdated(info: DropInfo) -> DropProposal? {
@@ -414,7 +469,7 @@ private struct AppGridEdgeDropDelegate: DropDelegate {
         }
 
         dropTarget = target
-        scrollRequest = scrollRequest(for: target)
+        requestScroll(to: target)
         return DropProposal(operation: .move)
     }
 
@@ -424,17 +479,19 @@ private struct AppGridEdgeDropDelegate: DropDelegate {
         }
 
         dropTarget = target
-        scrollRequest = scrollRequest(for: target)
+        requestScroll(to: target)
     }
 
     func dropExited(info: DropInfo) {
         dropTarget = nil
+        delayedScrollTarget = nil
     }
 
     func performDrop(info: DropInfo) -> Bool {
         defer {
             draggedAppID = nil
             dropTarget = nil
+            delayedScrollTarget = nil
         }
 
         guard let draggedAppID, let target = target() else {
@@ -490,5 +547,25 @@ private struct AppGridEdgeDropDelegate: DropDelegate {
             appID: target.appID,
             anchor: edge == .top ? .top : .bottom
         )
+    }
+
+    private func requestScroll(to target: AppGridDropTarget) {
+        let request = scrollRequest(for: target)
+        guard scrollDelayNanoseconds > 0 else {
+            delayedScrollTarget = nil
+            scrollRequest = request
+            return
+        }
+
+        delayedScrollTarget = target
+        DispatchQueue.main.asyncAfter(
+            deadline: .now() + .nanoseconds(Int(scrollDelayNanoseconds))
+        ) {
+            guard delayedScrollTarget == target else {
+                return
+            }
+
+            scrollRequest = request
+        }
     }
 }
